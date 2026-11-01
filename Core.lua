@@ -1,5 +1,5 @@
 -- EzAcquaintances: logs who you met into Recent faces; you write who they are in the Book.
--- Background only: never sends chat, never uses secure actions.
+-- Never sends chat; the only secure action is the book's right-click /targetexact (UI.lua).
 local _, ns = ...
 
 BINDING_HEADER_EZACQUAINTANCES = "EzAcquaintances"

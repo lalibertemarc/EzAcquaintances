@@ -17,10 +17,10 @@ read_globals = {
     -- Lua / WoW utility
     "strtrim", "strlower", "wipe", "tinsert", "date", "time", "hooksecurefunc",
     -- Frames & UI
-    "CreateFrame", "UIParent", "UISpecialFrames", "GameTooltip", "DEFAULT_CHAT_FRAME", "ChatFrame1", "TargetFrame",
+    "CreateFrame", "InCombatLockdown", "UIParent", "UISpecialFrames", "GameTooltip", "DEFAULT_CHAT_FRAME", "ChatFrame1", "TargetFrame",
     "RAID_CLASS_COLORS", "TooltipDataProcessor", "Enum",
     -- Namespaced APIs
-    "C_Timer", "issecretvalue",
+    "C_Timer", "C_CVar", "issecretvalue",
     -- Global APIs
     "GetBuildInfo", "GetTime", "GetRealmName", "GetRealZoneText", "GetZoneText", "GetSubZoneText",
     "UnitExists", "UnitIsPlayer", "UnitName", "UnitRace", "UnitClass", "UnitLevel", "GetPlayerInfoByGUID",

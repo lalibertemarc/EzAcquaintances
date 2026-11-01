@@ -1,6 +1,6 @@
 -- EzAcquaintances window (Book / Recent faces tabs, search, tag filter, detail pane, options) and the
--- launcher icon. Own flat frames only: Blizzard menus crash in combat on Forever, and nothing here is
--- protected, so the window stays usable in combat.
+-- launcher icon. Own flat frames only: Blizzard menus crash in combat on Forever, and the window itself is
+-- never protected, so it stays usable in combat (right-click targeting is a separate secure button).
 local _, ns = ...
 
 local W, H = 600, 400
@@ -206,7 +206,11 @@ book:EnableMouse(true)
 Movable(book, "framePos")
 book:Hide()
 tinsert(UISpecialFrames, "EzAcquaintancesFrame") -- Esc closes it
-book:SetScript("OnHide", function() popup:Hide() end)
+local Uncover -- defined with the list
+book:SetScript("OnHide", function()
+    popup:Hide()
+    Uncover()
+end)
 
 local selected, offset, keys = nil, 0, {}
 local filterTag
@@ -320,17 +324,89 @@ for i = 1, LIST_ROWS do
     b.info:SetJustifyH("RIGHT")
     b.info:SetWordWrap(false)
     b.name:SetPoint("RIGHT", b.info, "LEFT", -6, 0)
-    b:SetScript("OnClick", function(self)
+    b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    -- Out of combat the target button below covers the row and takes its clicks.
+    b:SetScript("OnClick", function(self, button)
         selected = self.key
         Refresh(true)
+        if button == "RightButton" and InCombatLockdown() then ns.Print("Can't target from the book in combat.") end
     end)
     rows[i] = b
 end
 
-list:SetScript("OnMouseWheel", function(_, delta)
+local function Scroll(delta)
     offset = math.max(0, math.min(offset - delta * 3, #keys - LIST_ROWS))
     Refresh()
+end
+list:SetScript("OnMouseWheel", function(_, delta) Scroll(delta) end)
+
+-- Right-click a row to target them. Targeting by name needs a secure macro (/targetexact: Forever gives
+-- addons no friendly nameplates), and secure frames can't change in combat. So the rows stay plain and,
+-- out of combat, one secure button covers the row under the mouse (left-click still selects). It sits on
+-- UIParent, placed by coordinates: inside or anchored to the book, it would lock the book in combat.
+local targetButton = CreateFrame("Button", "EzAcquaintancesTargetButton", UIParent, "SecureActionButtonTemplate")
+targetButton:SetFrameStrata("HIGH")
+targetButton:RegisterForClicks("LeftButtonUp",
+    C_CVar.GetCVarBool("ActionButtonUseKeyDown") and "RightButtonDown" or "RightButtonUp")
+targetButton:SetAttribute("type2", "macro")
+targetButton:EnableMouseWheel(true)
+targetButton:Hide()
+
+-- Full name first, then the first name alone, which is what the unit is called (as in EzMark). No
+-- /cleartarget: when they aren't in view, you keep your target.
+local function TargetMacro(name)
+    name = name:gsub("%c", "")
+    local first = name:match("^%S+") or name
+    if first == name then return "/targetexact " .. name end
+    return "/targetexact " .. name .. "\n/targetexact " .. first
+end
+
+function Uncover()
+    if targetButton.row then targetButton.row:UnlockHighlight() end
+    targetButton.row = nil
+    if not InCombatLockdown() then targetButton:Hide() end
+end
+
+-- Puts the target button over row b and points it at b's person.
+local function Cover(b)
+    if InCombatLockdown() then return end
+    local p = b:IsVisible() and b.key and ns.Person(b.key)
+    if not p then return Uncover() end
+    if targetButton.row and targetButton.row ~= b then targetButton.row:UnlockHighlight() end
+    local ratio = b:GetEffectiveScale() / targetButton:GetEffectiveScale()
+    targetButton:ClearAllPoints()
+    targetButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", b:GetLeft() * ratio, b:GetTop() * ratio)
+    targetButton:SetSize(b:GetWidth() * ratio, b:GetHeight() * ratio)
+    targetButton:SetFrameLevel(b:GetFrameLevel() + 5)
+    targetButton:SetAttribute("macrotext2", TargetMacro(p.name))
+    targetButton.row, targetButton.key, targetButton.name = b, b.key, p.name
+    b:LockHighlight()
+    targetButton:Show()
+end
+
+for _, b in ipairs(rows) do b:SetScript("OnEnter", Cover) end
+
+-- The macro has run by now; if they aren't the target, /targetexact didn't find them.
+targetButton:SetScript("PostClick", function(self, button)
+    local key, name = self.key, self.name
+    selected = key
+    Refresh(true)
+    if button ~= "RightButton" then return end
+    local info = ns.UnitInfo("target")
+    if not (info and ns.Key(info.name) == key) then ns.Print(name .. " isn't close enough to target.") end
 end)
+targetButton:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+    GameTooltip:AddLine("Right-click: target them if they're nearby", 0.8, 0.8, 0.8)
+    GameTooltip:Show()
+end)
+targetButton:SetScript("OnLeave", function(self)
+    GameTooltip:Hide()
+    if not self:IsMouseOver() then Uncover() end
+end)
+targetButton:SetScript("OnMouseWheel", function(_, delta) Scroll(delta) end)
+targetButton:RegisterEvent("PLAYER_REGEN_DISABLED") -- last moment it can still be hidden
+targetButton:SetScript("OnEvent", Uncover)
 
 local function Matches(p, query)
     if filterTag and not (p.tags and p.tags[filterTag]) then return false end
@@ -664,6 +740,7 @@ function Refresh(force)
     tagFilter:SetShown(isList)
     options:SetShown(not isList)
     if not isList then
+        Uncover()
         for _, c in ipairs(checks) do c.Update() end
         return
     end
@@ -692,6 +769,7 @@ function Refresh(force)
     empty:SetText((search:GetText() ~= "" or filterTag) and "Nobody matches."
         or EzAcquaintancesDB.tab == "book" and "Your book is empty. Add faces from Recent, or /acq add <name>."
         or "No recent faces yet.")
+    if targetButton.row then Cover(targetButton.row) end -- the list moved under it
     ShowDetail(force)
 end
 

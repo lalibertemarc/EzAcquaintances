@@ -15,7 +15,7 @@ Someone lands in **Recent faces** when you:
 - they emote at you (`/wave` at you, or an `/e` line with your name in it),
 - you target them and you both speak in `/say` within a minute.
 
-For each person it keeps where and when you first met (zone, subzone, date) and how, when you last saw them, how many times you've met (contacts more than 30 minutes apart), and their race, class and level when the game tells us (targeting, mouseover, group, chat). Names the game hides (Forever dungeons and raids) are skipped. EzAcquaintances never sends chat and never uses secure actions.
+For each person it keeps where and when you first met (zone, subzone, date) and how, when you last saw them, how many times you've met (contacts more than 30 minutes apart), and their race, class and level when the game tells us (targeting, mouseover, group, chat). Names the game hides (Forever dungeons and raids) are skipped. EzAcquaintances never sends chat.
 
 Recent faces you never add to the Book are forgotten after 14 days.
 
@@ -29,6 +29,8 @@ Click **Add to book** and fill in:
 - **Note**: free text.
 
 People in your book show your alias, relationship, tags and the start of your note on their tooltip, and a small badge by the target frame while you target them (drag it where you like, click it to open them in your book).
+
+Right-click a name in the list to target them when they're nearby (out of combat; you keep your current target if they aren't in view).
 
 Each character keeps its own book. An account-wide index remembers which of your characters met whom, so the book can tell you "Bob met them 2026-09-10 in Goldshire".
 
