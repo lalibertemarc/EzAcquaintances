@@ -1,0 +1,13 @@
+## Interface: 16001, 11509
+## Title: EzAcquaintances
+## Notes: A roleplay contact book. Logs who you met (grouped, whispered, traded, dueled, emoted at you); you write who they are.
+## Author: Marc
+## Version: @project-version@
+## IconTexture: Interface\Icons\INV_Misc_Book_09
+## SavedVariables: EzAcquaintancesDB
+## SavedVariablesPerCharacter: EzAcquaintancesCharDB
+
+Data.lua
+Core.lua
+UI.lua
+Tooltip.lua
