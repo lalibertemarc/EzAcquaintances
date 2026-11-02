@@ -6,6 +6,7 @@ globals = {
     "EzAcquaintancesDB",
     "EzAcquaintancesCharDB",
     "EzAcquaintances_Toggle",
+    "EzAcquaintancesAPI",
     "SLASH_EZACQUAINTANCES1",
     "SLASH_EZACQUAINTANCES2",
     "SlashCmdList",

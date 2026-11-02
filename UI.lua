@@ -215,6 +215,7 @@ end)
 local selected, offset, keys = nil, 0, {}
 local filterTag
 local mode = "list" -- "list" | "options"
+local extraTabs = {} -- tabs other addons added (EzAcquaintancesAPI.AddTab): key -> { def, panel }
 local Refresh, ShowDetail -- defined below
 
 local close = TextButton(book, "x", TOP_H)
@@ -238,12 +239,13 @@ gear:SetScript("OnClick", function()
     Refresh()
 end)
 
--- Tabs
-local tabs = {}
-local function Tab(key, x)
+-- Tabs, left to right; each is sized to its label in Refresh.
+local tabs, lastTab = {}, nil
+local function Tab(key)
     local b = CreateFrame("Button", nil, book)
     b:SetSize(80, TOP_H)
-    b:SetPoint("TOPLEFT", x, -PAD)
+    if lastTab then b:SetPoint("LEFT", lastTab, "RIGHT", 2, 0) else b:SetPoint("TOPLEFT", PAD, -PAD) end
+    lastTab = b
     Hover(b, 0.05)
     b.text = Text(b, "GameFontNormalSmall")
     b.text:SetPoint("CENTER")
@@ -259,12 +261,10 @@ local function Tab(key, x)
     tabs[key] = b
     return b
 end
-Tab("book", PAD)
-Tab("recent", PAD + 82)
+Tab("book")
+Tab("recent")
 
 local search = SingleLineBox(book, "Search names, notes, places", 6)
-search:SetPoint("TOPLEFT", PAD + 170, -PAD)
-search:SetWidth(200)
 search:HookScript("OnTextChanged", function()
     offset = 0
     Refresh()
@@ -275,7 +275,7 @@ end)
 
 local tagFilter = TextButton(book, "All tags", 110)
 tagFilter:SetHeight(TOP_H)
-tagFilter:SetPoint("LEFT", search, "RIGHT", 6, 0)
+tagFilter:SetPoint("RIGHT", gear, "LEFT", -6, 0)
 tagFilter:SetScript("OnClick", function(self)
     local items = { { label = "All tags", checked = not filterTag, onClick = function() filterTag = nil Refresh() end } }
     for _, tag in ipairs(ns.AllTags()) do
@@ -286,6 +286,14 @@ tagFilter:SetScript("OnClick", function(self)
     end
     OpenPopup(self, items)
 end)
+
+-- The search box fills the bar between the last tab and the tag filter.
+local function PlaceSearch()
+    search:ClearAllPoints()
+    search:SetPoint("LEFT", lastTab, "RIGHT", 8, 0)
+    search:SetPoint("RIGHT", tagFilter, "LEFT", -6, 0)
+end
+PlaceSearch()
 
 ---------------------------------------------------------------------------
 -- List
@@ -722,25 +730,31 @@ hint:SetText(("Recent faces you don't add to the book are forgotten after %d day
 -- force: the selection changed (resets the edit boxes).
 function Refresh(force)
     if not book:IsShown() then return end
+    if not tabs[EzAcquaintancesDB.tab] then EzAcquaintancesDB.tab = "book" end -- its addon isn't loaded
     local counts = Collect()
     tabs.book.text:SetText(("Book (%d)"):format(counts.book))
     tabs.recent.text:SetText(("Recent (%d)"):format(counts.recent))
+    for key, x in pairs(extraTabs) do tabs[key].text:SetText(x.def.label()) end
     for key, b in pairs(tabs) do
         local on = mode == "list" and key == EzAcquaintancesDB.tab
         b.bar:SetShown(on)
         b.text:SetTextColor(on and 1 or 0.6, on and 0.82 or 0.6, on and 0.3 or 0.6)
+        b:SetWidth(math.max(64, b.text:GetStringWidth() + 20))
     end
     tagFilter.text:SetText(filterTag or "All tags")
 
-    local isList = mode == "list"
+    local own = mode == "list" and extraTabs[EzAcquaintancesDB.tab]
+    local isList = mode == "list" and not own
     list:SetShown(isList)
     detail:SetShown(isList)
     divider:SetShown(isList)
     search:SetShown(isList)
     tagFilter:SetShown(isList)
-    options:SetShown(not isList)
+    options:SetShown(mode == "options")
+    for _, x in pairs(extraTabs) do x.panel:SetShown(x == own) end
     if not isList then
         Uncover()
+        if own then return own.def.refresh(own.panel) end
         for _, c in ipairs(checks) do c.Update() end
         return
     end
@@ -793,6 +807,41 @@ end
 function EzAcquaintances_Toggle()
     ns.ToggleBook()
 end
+
+-- For other addons: a tab of their own in the book (EzMinion's graduates). AddTab{ key, label = function()
+-- -> tab text, build = function(panel) once, refresh = function(panel) each time the book refreshes on
+-- that tab }. The panel fills the body under the tabs (api.ROWS rows of api.ROW_H); the helpers give it
+-- the book's look.
+EzAcquaintancesAPI = {
+    AddTab = function(def)
+        if tabs[def.key] then return end
+        Tab(def.key)
+        PlaceSearch()
+        local panel = CreateFrame("Frame", nil, book)
+        panel:SetPoint("TOPLEFT", PAD, BODY_TOP)
+        panel:SetPoint("BOTTOMRIGHT", -PAD, PAD)
+        panel:Hide()
+        def.build(panel)
+        extraTabs[def.key] = { def = def, panel = panel }
+    end,
+    Refresh = function() Refresh() end,
+    ShowTab = function(key)
+        EzAcquaintancesDB.tab, mode = key, "list"
+        book:Show()
+        Refresh(true)
+    end,
+    -- This character's record of name, or nil.
+    Person = function(name) return ns.Person(ns.Key(name)) end,
+    -- Opens the book at name; false when they aren't in it.
+    ShowPerson = function(name)
+        if not ns.Person(ns.Key(name)) then return false end
+        ns.ToggleBook(ns.Key(name))
+        return true
+    end,
+    ClassText = function(p) return ns.ClassText(p) end,
+    ROW_H = ROW_H, ROWS = LIST_ROWS, LIST_W = LIST_W,
+    Skin = Skin, Text = Text, Hover = Hover, TextButton = TextButton, SingleLineBox = SingleLineBox,
+}
 
 ---------------------------------------------------------------------------
 -- Launcher icon

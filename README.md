@@ -34,6 +34,8 @@ Right-click a name in the list to target them when they're nearby (out of combat
 
 Each character keeps its own book. An account-wide index remembers which of your characters met whom, so the book can tell you "Bob met them 2026-09-10 in Goldshire".
 
+Other addons can add a tab of their own to the book with `EzAcquaintancesAPI.AddTab` (see the end of `UI.lua`): EzMinion lists a warlock's graduates there.
+
 ## Commands
 
 | Command | |
