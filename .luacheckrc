@@ -27,4 +27,5 @@ read_globals = {
     "UnitExists", "UnitIsPlayer", "UnitName", "UnitRace", "UnitClass", "UnitLevel", "GetPlayerInfoByGUID",
     "IsInGroup", "IsInRaid", "GetNumGroupMembers", "GetNumSubgroupMembers", "StartDuel",
     "UnitGUID", "CombatLogGetCurrentEventInfo", "_G",
+    "UnitInParty", "UnitInRaid", "UnitIsUnit", "UnitIsConnected", "UnitIsVisible", "GetRaidRosterInfo", "C_Map",
 }

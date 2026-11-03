@@ -33,12 +33,48 @@ local function PersonFor(unit)
     return ns.Person(key), key
 end
 
+local issecret = issecretvalue or function() return false end
+
+-- true/false for a yes/no unit API answer, nil when it's secret.
+local function Check(v)
+    if issecret(v) then return nil end
+    return v and true or false
+end
+
+-- Zone of a group member: the raid roster has it, else the map they're on (works for party members).
+local function GroupZone(unit)
+    local index = unit:match("^raid(%d+)$") or (IsInRaid() and ns.Readable(UnitInRaid(unit)))
+    if index and GetRaidRosterInfo then
+        local zone = ns.Readable(select(7, GetRaidRosterInfo(tonumber(index))))
+        if zone then return zone end
+    end
+    local mapID = C_Map and C_Map.GetBestMapForUnit and ns.Readable(C_Map.GetBestMapForUnit(unit))
+    local info = mapID and C_Map.GetMapInfo(mapID)
+    return info and ns.Readable(info.name)
+end
+
+-- The zone of a group member out of sight, unless the tooltip already shows it.
+local function AddZoneLine(tooltip, unit)
+    if not (unit and ns.Readable(unit)) then return end
+    if not (Check(UnitInParty(unit)) or Check(UnitInRaid(unit))) then return end
+    if Check(UnitIsUnit(unit, "player")) ~= false or Check(UnitIsConnected(unit)) == false then return end
+    if Check(UnitIsVisible(unit)) ~= false then return end -- in sight: you can see where they are
+    local zone = GroupZone(unit)
+    if not zone then return end
+    for i = 1, tooltip:NumLines() do
+        local line = _G[tooltip:GetName() .. "TextLeft" .. i]
+        if line and ns.Readable(line:GetText()) == zone then return end
+    end
+    tooltip:AddLine(zone, 1, 1, 1)
+end
+
 ---------------------------------------------------------------------------
 -- Tooltip
 ---------------------------------------------------------------------------
 local function OnUnitTooltip(tooltip)
     if tooltip ~= GameTooltip or not EzAcquaintancesDB or not EzAcquaintancesDB.tooltip then return end
     local _, unit = tooltip:GetUnit()
+    AddZoneLine(tooltip, unit)
     local p = PersonFor(unit)
     if not p then return end
     if p.book then
