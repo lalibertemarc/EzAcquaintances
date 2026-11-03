@@ -13,15 +13,16 @@ ns.TRIGGERS = {
     whisper = { label = "Whispered both ways", on = true, window = 600 },
     trade   = { label = "Traded with you", on = true },
     duel    = { label = "Dueled you", on = true },
+    buff    = { label = "Buffed you (or you thanked them with Buff Me Please or EzMinion)", on = true },
     emote   = { label = "Emoted at you", on = true, custom = true }, -- custom: an /e line naming you counts too
     say     = { label = "Talked in /say while targeted", on = true, window = 60 },
     manual  = { label = "Added by hand", on = true },
 }
-ns.TRIGGER_ORDER = { "group", "whisper", "trade", "duel", "emote", "say" } -- options page; manual is always on
+ns.TRIGGER_ORDER = { "group", "whisper", "trade", "duel", "buff", "emote", "say" } -- options page; manual is always on
 
 -- Short verbs for "first met ... (whispered)".
 ns.TRIGGER_VERB = {
-    group = "grouped", whisper = "whispered", trade = "traded", duel = "dueled",
+    group = "grouped", whisper = "whispered", trade = "traded", duel = "dueled", buff = "buffed you",
     emote = "emoted at you", say = "talked", manual = "added by hand",
 }
 

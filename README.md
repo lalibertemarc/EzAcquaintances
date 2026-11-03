@@ -12,6 +12,7 @@ Someone lands in **Recent faces** when you:
 - whisper each other, both ways, within 10 minutes,
 - trade with them,
 - duel them (either of you asks),
+- they buff you (the game names the caster when it's your target or in your group, as when you ask with Buff Me Please or order them with EzMinion; Classic Era also catches anyone in range through the combat log), or you thank your target with Buff Me Please's or EzMinion's thanks button,
 - they emote at you (`/wave` at you, or an `/e` line with your name in it),
 - you target them and you both speak in `/say` within a minute.
 

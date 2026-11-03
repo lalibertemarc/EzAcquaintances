@@ -26,4 +26,5 @@ read_globals = {
     "GetBuildInfo", "GetTime", "GetRealmName", "GetRealZoneText", "GetZoneText", "GetSubZoneText",
     "UnitExists", "UnitIsPlayer", "UnitName", "UnitRace", "UnitClass", "UnitLevel", "GetPlayerInfoByGUID",
     "IsInGroup", "IsInRaid", "GetNumGroupMembers", "GetNumSubgroupMembers", "StartDuel",
+    "UnitGUID", "CombatLogGetCurrentEventInfo", "_G",
 }

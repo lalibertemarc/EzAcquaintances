@@ -80,7 +80,7 @@ local function GuidInfo(guid, info)
     return info
 end
 
-local myKey, myFirst, myChar -- your key, first name, and the account index's name for you
+local myKey, myFirst, myChar, myGUID -- your key, first name, the account index's name for you, your GUID
 
 ---------------------------------------------------------------------------
 -- Records
@@ -398,6 +398,28 @@ local function OnEmote(text, name, guid, custom)
     if NamesMe(text, custom) then ns.Meet(GuidInfo(guid, { name = name }), "emote") end
 end
 
+-- A buff landing on you: UNIT_AURA's added auras name the caster's unit when the game has one for them
+-- (your target, group, mouseover), as when you target someone and ask with Buff Me Please or EzMinion. In Forever the
+-- aura data can be secret (combat), so every field is read through Readable.
+local function OnAura(unit, info)
+    if unit ~= "player" or not ns.TriggerOn("buff") or type(info) ~= "table" or issecret(info) then return end
+    local added = info.addedAuras
+    if type(added) ~= "table" or issecret(added) then return end
+    for _, a in ipairs(added) do
+        local src = not issecret(a) and Readable(a.isHelpful) and Readable(a.sourceUnit)
+        if src and src ~= "player" then ns.Meet(ns.UnitInfo(src), "buff") end
+    end
+end
+
+-- Era only (the combat log is restricted in Forever): anyone in range who buffs you, targeted or not.
+local function OnCombatLog()
+    local _, sub, _, srcGUID, srcName, _, _, dstGUID, _, _, _, _, _, _, auraType = CombatLogGetCurrentEventInfo()
+    if sub ~= "SPELL_AURA_APPLIED" or auraType ~= "BUFF" or dstGUID ~= myGUID or srcGUID == myGUID then return end
+    if type(srcGUID) == "string" and srcGUID:find("^Player%-") then
+        ns.Meet(GuidInfo(srcGUID, { name = srcName }), "buff")
+    end
+end
+
 local groupPending = false
 local function ScanGroup()
     groupPending = false
@@ -659,11 +681,13 @@ local HANDLERS = {
     DUEL_TO_THE_DEATH_REQUESTED = function(name) -- Forever only
         ns.Meet({ name = name }, "duel")
     end,
+    UNIT_AURA = OnAura,
     PLAYER_TARGET_CHANGED = OnTarget,
     UPDATE_MOUSEOVER_UNIT = function()
         ns.Seen(ns.UnitInfo("mouseover"))
     end,
 }
+if ns.ERA then HANDLERS.COMBAT_LOG_EVENT_UNFILTERED = OnCombatLog end
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_LOGIN")
@@ -673,6 +697,7 @@ ev:SetScript("OnEvent", function(_, event, ...)
     myFirst = UnitName("player")
     myKey = ns.Key(myFirst)
     myChar = ns.ERA and (myFirst .. "-" .. GetRealmName()) or myFirst
+    myGUID = UnitGUID("player")
     Prune()
     for name in pairs(HANDLERS) do
         pcall(ev.RegisterEvent, ev, name) -- an event this client doesn't have is skipped
@@ -682,6 +707,16 @@ ev:SetScript("OnEvent", function(_, event, ...)
         hooksecurefunc("StartDuel", function(unit)
             if type(unit) == "string" then ns.Meet(ns.UnitInfo(unit), "duel") end
         end)
+    end
+    -- Buff Me Please's and EzMinion's thanks buttons (click or key binding): thanking your target counts as
+    -- being buffed, even when the game didn't say who cast the buff. Plain buttons, so a post-hook taints
+    -- nothing. No OnClick means that addon stood down on this character (Buff Me Please on a warlock with
+    -- EzMinion, EzMinion on anyone but a warlock).
+    for _, name in ipairs({ "BuffMePleaseThanksButton", "EzMinionThanksButton" }) do
+        local thanks = _G[name] -- nil when that addon isn't loaded
+        if thanks and thanks:GetScript("OnClick") then
+            thanks:HookScript("OnClick", function() ns.Meet(ns.UnitInfo("target"), "buff") end)
+        end
     end
     if ns.OnLogin then ns.OnLogin() end
 end)
