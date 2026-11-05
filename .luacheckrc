@@ -19,6 +19,7 @@ read_globals = {
     "strtrim", "strlower", "wipe", "tinsert", "date", "time", "hooksecurefunc",
     -- Frames & UI
     "CreateFrame", "InCombatLockdown", "UIParent", "UISpecialFrames", "GameTooltip", "DEFAULT_CHAT_FRAME", "ChatFrame1", "TargetFrame",
+    "ChatFrameUtil", "ChatFrame_SendTell",
     "RAID_CLASS_COLORS", "TooltipDataProcessor", "Enum",
     -- Namespaced APIs
     "C_Timer", "C_CVar", "issecretvalue",

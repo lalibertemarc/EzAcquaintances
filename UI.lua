@@ -1,6 +1,7 @@
 -- EzAcquaintances window (Book / Recent faces tabs, search, tag filter, detail pane, options) and the
 -- launcher icon. Own flat frames only: Blizzard menus crash in combat on Forever, and the window itself is
 -- never protected, so it stays usable in combat (right-click targeting is a separate secure button).
+-- Whispering only opens the chat box on them (Blizzard's SendTell); you still type and send it yourself.
 local _, ns = ...
 
 local W, H = 600, 400
@@ -332,14 +333,23 @@ for i = 1, LIST_ROWS do
     b.info:SetJustifyH("RIGHT")
     b.info:SetWordWrap(false)
     b.name:SetPoint("RIGHT", b.info, "LEFT", -6, 0)
-    b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    b:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
     -- Out of combat the target button below covers the row and takes its clicks.
     b:SetScript("OnClick", function(self, button)
         selected = self.key
         Refresh(true)
+        if button == "MiddleButton" then return ns.Whisper(self.key) end
         if button == "RightButton" and InCombatLockdown() then ns.Print("Can't target from the book in combat.") end
     end)
     rows[i] = b
+end
+
+-- Opens the chat box with a whisper to key's person (full "First Surname": a first name alone doesn't
+-- reach them on Forever).
+local SendTell = (ChatFrameUtil and ChatFrameUtil.SendTell) or ChatFrame_SendTell
+function ns.Whisper(key)
+    local p = key and ns.Person(key)
+    if p and SendTell then SendTell((p.name:gsub("%c", ""))) end
 end
 
 local function Scroll(delta)
@@ -354,7 +364,7 @@ list:SetScript("OnMouseWheel", function(_, delta) Scroll(delta) end)
 -- UIParent, placed by coordinates: inside or anchored to the book, it would lock the book in combat.
 local targetButton = CreateFrame("Button", "EzAcquaintancesTargetButton", UIParent, "SecureActionButtonTemplate")
 targetButton:SetFrameStrata("HIGH")
-targetButton:RegisterForClicks("LeftButtonUp",
+targetButton:RegisterForClicks("LeftButtonUp", "MiddleButtonUp",
     C_CVar.GetCVarBool("ActionButtonUseKeyDown") and "RightButtonDown" or "RightButtonUp")
 targetButton:SetAttribute("type2", "macro")
 targetButton:EnableMouseWheel(true)
@@ -399,6 +409,7 @@ targetButton:SetScript("PostClick", function(self, button)
     local key, name = self.key, self.name
     selected = key
     Refresh(true)
+    if button == "MiddleButton" then return ns.Whisper(key) end
     if button ~= "RightButton" then return end
     local info = ns.UnitInfo("target")
     if not (info and ns.Key(info.name) == key) then ns.Print(name .. " isn't close enough to target.") end
@@ -406,6 +417,7 @@ end)
 targetButton:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
     GameTooltip:AddLine("Right-click: target them if they're nearby", 0.8, 0.8, 0.8)
+    GameTooltip:AddLine("Middle-click: whisper them", 0.8, 0.8, 0.8)
     GameTooltip:Show()
 end)
 targetButton:SetScript("OnLeave", function(self)
@@ -596,6 +608,10 @@ primary.text:SetJustifyH("CENTER")
 local forget = TextButton(detail, "", 120)
 forget:SetPoint("LEFT", primary, "RIGHT", 6, 0)
 forget.text:SetJustifyH("CENTER")
+local whisper = TextButton(detail, "Whisper", 80)
+whisper:SetPoint("BOTTOMRIGHT")
+whisper.text:SetJustifyH("CENTER")
+whisper:SetScript("OnClick", function() ns.Whisper(selected) end)
 
 primary:SetScript("OnClick", function()
     local p = Current()
@@ -624,7 +640,7 @@ blank:SetPoint("TOPLEFT", 0, -4)
 blank:SetPoint("RIGHT")
 blank:SetJustifyH("LEFT")
 
-local detailParts = { nameText, classText, alias, rel, tagsButton, noteBox, facts, primary, forget }
+local detailParts = { nameText, classText, alias, rel, tagsButton, noteBox, facts, primary, forget, whisper }
 
 local function ShowParts(on)
     for _, f in ipairs(detailParts) do f:SetShown(on) end

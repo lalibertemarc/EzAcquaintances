@@ -31,7 +31,7 @@ Click **Add to book** and fill in:
 
 People in your book show your alias, relationship, tags and the start of your note on their tooltip, and a small badge by the target frame while you target them (drag it where you like, click it to open them in your book). Party and raid members out of sight show their zone on their tooltip too.
 
-Right-click a name in the list to target them when they're nearby (out of combat; you keep your current target if they aren't in view).
+Right-click a name in the list to target them when they're nearby (out of combat; you keep your current target if they aren't in view). Middle-click a name, or the Whisper button on their page, opens chat on a whisper to them; you write and send it yourself.
 
 Each character keeps its own book. An account-wide index remembers which of your characters met whom, so the book can tell you "Bob met them 2026-09-10 in Goldshire".
 
