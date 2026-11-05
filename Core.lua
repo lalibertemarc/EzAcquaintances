@@ -448,7 +448,8 @@ end
 ---------------------------------------------------------------------------
 -- Saved variables and pruning
 ---------------------------------------------------------------------------
-local ACCOUNT_DEFAULTS = { tooltip = true, badge = true, hideIcon = false, announce = true, tab = "book" }
+local ACCOUNT_DEFAULTS = { tooltip = true, badge = true, hideIcon = false, announce = true, tab = "book",
+    whisperWith = "chat" }
 
 local function InitDB()
     EzAcquaintancesDB = EzAcquaintancesDB or {}

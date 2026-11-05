@@ -1,7 +1,7 @@
 -- EzAcquaintances window (Book / Recent faces tabs, search, tag filter, detail pane, options) and the
 -- launcher icon. Own flat frames only: Blizzard menus crash in combat on Forever, and the window itself is
 -- never protected, so it stays usable in combat (right-click targeting is a separate secure button).
--- Whispering only opens the chat box on them (Blizzard's SendTell); you still type and send it yourself.
+-- Whispering only opens a box on them (chat's, or EzAccent's/EzOOC's/EzTongues' own); you type and send it yourself.
 local _, ns = ...
 
 local W, H = 600, 400
@@ -344,12 +344,41 @@ for i = 1, LIST_ROWS do
     rows[i] = b
 end
 
--- Opens the chat box with a whisper to key's person (full "First Surname": a first name alone doesn't
--- reach them on Forever).
+-- Ways to whisper someone: the chat box, or another addon's own box on a whisper to them. Each takes the full
+-- "First Surname" (a first name alone doesn't reach them on Forever). The one you pick is EzAcquaintancesDB.whisperWith.
 local SendTell = (ChatFrameUtil and ChatFrameUtil.SendTell) or ChatFrame_SendTell
-function ns.Whisper(key)
+local function Api(name)
+    local api = _G[name]
+    return type(api) == "table" and type(api.Whisper) == "function" and api.Whisper or nil
+end
+local WAYS = {
+    { key = "chat", label = "Chat", button = "Whisper", get = function() return SendTell end },
+    { key = "accent", label = "In your accent (EzAccent)", button = "Whisper: accent",
+        get = function() return Api("EzAccentAPI") end },
+    { key = "ooc", label = "Out of character (EzOOC)", button = "Whisper: OOC", get = function() return Api("EzOOCAPI") end },
+    { key = "tongue", label = "In a tongue (EzTongues)", button = "Whisper: tongue",
+        get = function() return Api("EzTonguesAPI") end },
+}
+
+-- The way you picked, or chat when its addon isn't loaded.
+local function WhisperWay()
+    for _, w in ipairs(WAYS) do
+        if w.key == EzAcquaintancesDB.whisperWith and w.get() then return w end
+    end
+    return WAYS[1]
+end
+
+-- The ways that work here (chat plus the box addons that are loaded).
+local function WhisperWays()
+    local ways = {}
+    for _, w in ipairs(WAYS) do if w.get() then ways[#ways + 1] = w end end
+    return ways
+end
+
+function ns.Whisper(key, way)
     local p = key and ns.Person(key)
-    if p and SendTell then SendTell((p.name:gsub("%c", ""))) end
+    local open = p and (way or WhisperWay()).get()
+    if open then open((p.name:gsub("%c", ""))) end
 end
 
 local function Scroll(delta)
@@ -417,7 +446,9 @@ end)
 targetButton:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
     GameTooltip:AddLine("Right-click: target them if they're nearby", 0.8, 0.8, 0.8)
-    GameTooltip:AddLine("Middle-click: whisper them", 0.8, 0.8, 0.8)
+    local way = WhisperWay()
+    GameTooltip:AddLine("Middle-click: whisper them" .. (way.key == "chat" and "" or " (" .. way.label .. ")"),
+        0.8, 0.8, 0.8)
     GameTooltip:Show()
 end)
 targetButton:SetScript("OnLeave", function(self)
@@ -602,16 +633,45 @@ facts:SetJustifyV("TOP")
 facts:SetSpacing(2)
 
 -- Bottom buttons: Recent "Add to book" / "Dismiss"; Book "Move to recent" / "Forget".
-local primary = TextButton(detail, "", 120)
+local primary = TextButton(detail, "", 100)
 primary:SetPoint("BOTTOMLEFT")
 primary.text:SetJustifyH("CENTER")
-local forget = TextButton(detail, "", 120)
+local forget = TextButton(detail, "", 100)
 forget:SetPoint("LEFT", primary, "RIGHT", 6, 0)
 forget.text:SetJustifyH("CENTER")
-local whisper = TextButton(detail, "Whisper", 80)
-whisper:SetPoint("BOTTOMRIGHT")
+
+-- Whisper: left-click opens your usual way, right-click lists the ways (picking one opens it and makes it your usual).
+local whisper = TextButton(detail, "Whisper", 10)
+whisper:SetPoint("LEFT", forget, "RIGHT", 6, 0)
+whisper:SetPoint("RIGHT")
 whisper.text:SetJustifyH("CENTER")
-whisper:SetScript("OnClick", function() ns.Whisper(selected) end)
+whisper:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+local function WhisperTip(self)
+    local ways = WhisperWays()
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:AddLine("Whisper them: " .. WhisperWay().label)
+    GameTooltip:AddLine("Opens it on them; you write and send the line.", 0.8, 0.8, 0.8)
+    if #ways > 1 then GameTooltip:AddLine("Right-click: whisper another way", 0.8, 0.8, 0.8) end
+    GameTooltip:Show()
+end
+whisper:SetScript("OnClick", function(self, button)
+    local ways = WhisperWays()
+    if button ~= "RightButton" or #ways < 2 then
+        popup:Hide()
+        return ns.Whisper(selected)
+    end
+    local items, current = {}, WhisperWay()
+    for _, w in ipairs(ways) do
+        items[#items + 1] = { label = w.label, checked = w == current, onClick = function()
+            EzAcquaintancesDB.whisperWith = w.key
+            ns.Whisper(selected, w)
+            Refresh()
+        end }
+    end
+    OpenPopup(self, items)
+end)
+whisper:SetScript("OnEnter", WhisperTip)
+whisper:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 primary:SetScript("OnClick", function()
     local p = Current()
@@ -689,6 +749,7 @@ function ShowDetail(force)
     facts:SetText(table.concat(lines, "\n"))
 
     primary.text:SetText(p.book and "Move to recent" or "Add to book")
+    whisper.text:SetText(WhisperWay().button)
     if forget.armed ~= selected then
         forget.armed = nil
         forget.text:SetText(p.book and "Forget" or "Dismiss")
