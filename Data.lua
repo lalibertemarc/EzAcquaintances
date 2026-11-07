@@ -13,7 +13,7 @@ ns.TRIGGERS = {
     whisper = { label = "Whispered both ways", on = true, window = 600 },
     trade   = { label = "Traded with you", on = true },
     duel    = { label = "Dueled you", on = true },
-    buff    = { label = "Buffed you (or you thanked them with Buff Me Please or EzMinion)", on = true },
+    buff    = { label = "Buffed you (or you thanked them with Buff Me Please)", on = true },
     emote   = { label = "Emoted at you", on = true, custom = true }, -- custom: an /e line naming you counts too
     say     = { label = "Talked in /say while targeted", on = true, window = 60 },
     manual  = { label = "Added by hand", on = true },

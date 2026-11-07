@@ -1,8 +1,8 @@
 # EzAcquaintances
 
-## Unreleased
+## v1.0.0
 
-- **Remember who you roleplayed with.** People you group, trade or duel with, who buff you (or you thank with Buff Me Please or EzMinion), whisper back and forth, who emote at you (or name you in an `/e` line), or who you target and talk to in `/say` land in **Recent faces** with where and when you first met, when you last saw them, how often you've met and their race, class and level when the game tells us. Nothing is ever sent to chat.
+- **Remember who you roleplayed with.** People you group, trade or duel with, who buff you (or you thank with Buff Me Please), whisper back and forth, who emote at you (or name you in an `/e` line), or who you target and talk to in `/say` land in **Recent faces** with where and when you first met, when you last saw them, how often you've met and their race, class and level when the game tells us. Nothing is ever sent to chat.
 - **Your book.** Add a face to the **Book** with one click and write who they are: a "known as" alias, a relationship, tags (ally, rival, owes me gold, ... or your own) and a free-text note. Faces you never add are forgotten after 14 days.
 - **On their tooltip.** People in your book show your alias, relationship, tags and note on their tooltip, and a small badge by the target frame while you target them (click it to open them in your book).
 - **Where's my group?** Hovering a party or raid member who's out of sight shows their zone on their tooltip.

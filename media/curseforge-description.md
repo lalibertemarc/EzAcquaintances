@@ -98,4 +98,4 @@ Come say hi: **[join the EzAddons Discord](https://discord.com/invite/bZrAYqbsD8
 
 ## Tell us what you think!
 
-Someone you met who didn't show up in Recent faces? A field you wish your book had? **Drop it in the [Discord](https://discord.com/invite/bZrAYqbsD8) or leave a comment** and it might be in the next update.
+Someone you met who didn't show up in Recent faces? A field you wish your book had? **Drop it in the [Discord](https://discord.com/invite/bZrAYqbsD8), leave a comment, or open an issue on [GitHub](https://github.com/lalibertemarc/EzAcquaintances/issues)** and it might be in the next update.
