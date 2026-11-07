@@ -83,7 +83,7 @@ EzAcquaintances is the memory of a whole set of roleplay addons:
 - **EzReflex**: your character answers emotes aimed at it. Tag someone *rival* or *liar* in your book and they get a glare instead of a bow; friends and family get a hug.
 - **EzAccent**: type normally, speak in your race's accent. Right-click the book's Whisper button to open the EzAccent box already on a whisper to them.
 - **EzOOC**: out-of-character lines in `(( ))`. Whisper someone OOC straight from their page.
-- **EzTongues** *(coming soon)*: speak Orcish, Thalassian, Gutterspeak and more. Whisper in a tongue from the book too.
+- **EzTongues**: speak Orcish, Thalassian, Gutterspeak and more. Whisper in a tongue from the book too.
 - **Buff Me Please**: asks the right player for the right buff. Thanking them logs the meeting.
 
 Every one of them is free, stands on its own, and needs nothing from the people you meet.
