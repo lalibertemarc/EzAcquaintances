@@ -394,7 +394,7 @@ list:SetScript("OnMouseWheel", function(_, delta) Scroll(delta) end)
 -- UIParent, placed by coordinates: inside or anchored to the book, it would lock the book in combat.
 local targetButton = CreateFrame("Button", "EzAcquaintancesTargetButton", UIParent, "SecureActionButtonTemplate")
 targetButton:SetFrameStrata("HIGH")
-targetButton:RegisterForClicks("LeftButtonUp", "MiddleButtonUp",
+targetButton:RegisterForClicks("LeftButtonUp",
     C_CVar.GetCVarBool("ActionButtonUseKeyDown") and "RightButtonDown" or "RightButtonUp")
 targetButton:SetAttribute("type2", "macro")
 targetButton:EnableMouseWheel(true)
@@ -409,10 +409,27 @@ local function TargetMacro(name)
     return "/targetexact " .. name .. "\n/targetexact " .. first
 end
 
+-- Middle mouse is often bound to something else (Forever's default: ping), and a mouse binding fires
+-- even over a frame. So while the target button covers a row, middle mouse is overridden to click this
+-- plain button instead, which whispers; the bound action doesn't fire. Override bindings can't change
+-- in combat: there the rows' own middle-click whispers and the bound action fires too.
+local whisperKey = CreateFrame("Button", "EzAcquaintancesWhisperKey", UIParent)
+whisperKey:RegisterForClicks("AnyUp")
+whisperKey:SetScript("OnClick", function()
+    local key = targetButton.row and targetButton.key
+    if not key then return end
+    selected = key
+    Refresh(true)
+    ns.Whisper(key)
+end)
+
 function Uncover()
     if targetButton.row then targetButton.row:UnlockHighlight() end
     targetButton.row = nil
-    if not InCombatLockdown() then targetButton:Hide() end
+    if not InCombatLockdown() then
+        targetButton:Hide()
+        ClearOverrideBindings(whisperKey)
+    end
 end
 
 -- Puts the target button over row b and points it at b's person.
@@ -430,6 +447,7 @@ local function Cover(b)
     targetButton.row, targetButton.key, targetButton.name = b, b.key, p.name
     b:LockHighlight()
     targetButton:Show()
+    SetOverrideBindingClick(whisperKey, true, "BUTTON3", "EzAcquaintancesWhisperKey", "MiddleButton")
 end
 
 for _, b in ipairs(rows) do b:SetScript("OnEnter", Cover) end
@@ -439,7 +457,6 @@ targetButton:SetScript("PostClick", function(self, button)
     local key, name = self.key, self.name
     selected = key
     Refresh(true)
-    if button == "MiddleButton" then return ns.Whisper(key) end
     if button ~= "RightButton" then return end
     local info = ns.UnitInfo("target")
     if not (info and ns.Key(info.name) == key) then ns.Print(name .. " isn't close enough to target.") end
