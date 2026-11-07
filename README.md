@@ -2,7 +2,7 @@
 
 A roleplay contact book for WoW Forever and Classic Era. The addon logs who you met; you write who they are.
 
-Forever turned off the old friend list, so there's nowhere to remember the people you roleplayed with. EzAcquaintances fills that gap without filling up with every passerby: only meaningful contact counts.
+Forever's Recent Allies list is handy for finding who you just played with. EzAcquaintances takes that idea further: it keeps people for as long as you like and lets you write down who they are to your character, without filling up with every passerby: only meaningful contact counts.
 
 ## Recent faces (automatic)
 
