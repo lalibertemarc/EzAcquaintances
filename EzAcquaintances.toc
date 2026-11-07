@@ -9,6 +9,7 @@
 ## AddonCompartmentFuncOnLeave: EzAcquaintances_OnAddonCompartmentLeave
 ## SavedVariables: EzAcquaintancesDB
 ## SavedVariablesPerCharacter: EzAcquaintancesCharDB
+## X-Curse-Project-ID: 1789569
 
 Data.lua
 Core.lua
