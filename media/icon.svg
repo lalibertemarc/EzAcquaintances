@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0" stop-color="#43226a"/>
+      <stop offset="0.6" stop-color="#22113c"/>
+      <stop offset="1" stop-color="#110820"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff0b0"/>
+      <stop offset="0.45" stop-color="#e5b94c"/>
+      <stop offset="1" stop-color="#8f5f17"/>
+    </linearGradient>
+    <linearGradient id="leather" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a2f3c"/>
+      <stop offset="1" stop-color="#3a1220"/>
+    </linearGradient>
+    <linearGradient id="pageL" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#c9b48a"/>
+      <stop offset="0.25" stop-color="#f3e6c4"/>
+      <stop offset="1" stop-color="#fffbea"/>
+    </linearGradient>
+    <linearGradient id="pageR" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#c9b48a"/>
+      <stop offset="0.25" stop-color="#f3e6c4"/>
+      <stop offset="1" stop-color="#fffbea"/>
+    </linearGradient>
+    <radialGradient id="aura" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ff9ec4" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#ff9ec4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pool" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffd36b" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffd36b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cameo" cx="50%" cy="40%" r="65%">
+      <stop offset="0" stop-color="#5a2f86"/>
+      <stop offset="1" stop-color="#1f0f33"/>
+    </radialGradient>
+    <linearGradient id="rose" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe0ec"/>
+      <stop offset="0.5" stop-color="#ff9ec4"/>
+      <stop offset="1" stop-color="#b8456f"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- a hooded stranger, cloak's base at the origin -->
+    <g id="bust">
+      <path d="M-58,0 C-56,-36 -42,-50 -26,-56 C-38,-74 -34,-108 0,-124 C34,-108 38,-74 26,-56 C42,-50 56,-36 58,0 Z"/>
+      <path d="M0,-124 C-4,-90 -6,-40 0,0" fill="none" stroke-width="2"/>
+    </g>
+  </defs>
+
+  <rect width="400" height="400" fill="url(#bg)"/>
+
+  <!-- stars -->
+  <g fill="#fff6d0" opacity="0.8">
+    <circle cx="30" cy="40" r="1.6"/><circle cx="372" cy="250" r="1.8"/><circle cx="118" cy="26" r="1.4"/>
+    <circle cx="300" cy="22" r="1.4"/><circle cx="24" cy="230" r="1.8"/><circle cx="378" cy="120" r="1.4"/>
+  </g>
+
+  <!-- soft glow behind the portrait -->
+  <ellipse cx="200" cy="130" rx="150" ry="120" fill="url(#aura)"/>
+
+  <!-- the open book -->
+  <ellipse cx="200" cy="362" rx="180" ry="22" fill="url(#pool)"/>
+  <g stroke="#3a2306" stroke-width="5" stroke-linejoin="round">
+    <!-- cover -->
+    <path d="M200,262 C150,238 80,238 26,254 L22,350 C80,334 150,336 200,360 C250,336 320,334 378,350 L374,254 C320,238 250,238 200,262 Z"
+          fill="url(#leather)"/>
+    <!-- gold edge on the cover -->
+    <path d="M200,262 C150,238 80,238 26,254 L22,350 C80,334 150,336 200,360 C250,336 320,334 378,350 L374,254 C320,238 250,238 200,262 Z"
+          fill="none" stroke="url(#gold)" stroke-width="3"/>
+    <!-- pages -->
+    <path d="M200,256 C152,230 90,228 40,242 L38,336 C90,322 152,324 200,348 Z" fill="url(#pageL)"/>
+    <path d="M200,256 C248,230 310,228 360,242 L362,336 C310,322 248,324 200,348 Z" fill="url(#pageR)"/>
+  </g>
+  <!-- spine shadow -->
+  <path d="M200,258 L200,346" stroke="#8f5f17" stroke-width="3" opacity="0.6"/>
+
+  <!-- left page: a name, a little portrait sketch -->
+  <g fill="none" stroke="#6b4a2a" stroke-width="4" stroke-linecap="round" opacity="0.75">
+    <path d="M62,262 Q100,254 132,258"/>
+    <path d="M62,282 Q104,274 178,282"/>
+    <path d="M62,302 Q104,294 178,302"/>
+    <path d="M62,322 Q96,316 140,320"/>
+  </g>
+  <!-- right page: handwriting, the last line still wet -->
+  <g fill="none" stroke="#6b4a2a" stroke-width="4" stroke-linecap="round" opacity="0.75">
+    <path d="M222,282 Q262,274 336,280"/>
+    <path d="M222,302 Q262,294 336,300"/>
+  </g>
+  <path d="M222,322 Q246,316 272,320" fill="none" stroke="#b8456f" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- a small heart on the right page -->
+  <path d="M244,262 c-6,-9 -18,-4 -14,4 c3,6 14,12 14,12 c0,0 11,-6 14,-12 c4,-8 -8,-13 -14,-4 z"
+        fill="url(#rose)" stroke="#6b2a42" stroke-width="2"/>
+
+  <!-- ribbon bookmark -->
+  <path d="M206,348 L206,384 L216,374 L226,384 L226,344" fill="url(#rose)" stroke="#3a2306" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- the quill, writing the last line -->
+  <g stroke-linejoin="round" stroke-linecap="round">
+    <path d="M276,318 C300,272 336,220 372,186 C366,226 338,270 290,308 Z"
+          fill="url(#gold)" stroke="#3a2306" stroke-width="3.5"/>
+    <path d="M278,316 C306,268 336,226 368,192" fill="none" stroke="#3a2306" stroke-width="2.5"/>
+    <path d="M272,326 L280,312" stroke="#3a2306" stroke-width="5"/>
+  </g>
+
+  <!-- the portrait rising from the book: a cameo of someone you met -->
+  <circle cx="200" cy="140" r="96" fill="#ff9ec4" opacity="0.30" filter="url(#glow)"/>
+  <circle cx="200" cy="140" r="86" fill="url(#cameo)" stroke="#3a2306" stroke-width="13"/>
+  <circle cx="200" cy="140" r="86" fill="none" stroke="url(#gold)" stroke-width="6"/>
+  <clipPath id="frame"><circle cx="200" cy="140" r="80"/></clipPath>
+  <g clip-path="url(#frame)" stroke="#3a2306" stroke-width="2.8" stroke-linejoin="round" fill="url(#gold)">
+    <use xlink:href="#bust" transform="translate(200,232) scale(1.25)"/>
+  </g>
+  <!-- the face in the hood's shadow, two eyes catching the light -->
+  <ellipse cx="200" cy="133" rx="21" ry="26" fill="#1f0f33" stroke="#3a2306" stroke-width="2.5"/>
+  <g fill="#ffe0ec" filter="url(#glow)">
+    <ellipse cx="192" cy="130" rx="4" ry="2.6"/><ellipse cx="208" cy="130" rx="4" ry="2.6"/>
+  </g>
+  <!-- question mark over their head: who are they? -->
+  <g transform="translate(262,58)">
+    <circle r="24" fill="url(#rose)" stroke="#3a2306" stroke-width="4"/>
+    <path d="M-7,-6 C-7,-17 9,-17 9,-6 C9,1 0,2 0,8" fill="none" stroke="#3a2306" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="0" cy="15" r="3.2" fill="#3a2306"/>
+  </g>
+
+  <!-- sparkles -->
+  <g fill="#fff6d0">
+    <path d="M70,92 l4,12 l12,4 l-12,4 l-4,12 l-4,-12 l-12,-4 l12,-4 z"/>
+    <path d="M340,104 l3,9 l9,3 l-9,3 l-3,9 l-3,-9 l-9,-3 l9,-3 z"/>
+    <path d="M118,214 l2.5,7.5 l7.5,2.5 l-7.5,2.5 l-2.5,7.5 l-2.5,-7.5 l-7.5,-2.5 l7.5,-2.5 z"/>
+  </g>
+  <g fill="#ff9ec4" filter="url(#glow)">
+    <circle cx="36" cy="160" r="3.5"/><circle cx="366" cy="226" r="3"/><circle cx="150" cy="40" r="2.5"/>
+  </g>
+</svg>
