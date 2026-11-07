@@ -1,6 +1,7 @@
 -- EzAcquaintances window (Book / Recent faces tabs, search, tag filter, detail pane, options) and the
--- launcher icon. Own flat frames only: Blizzard menus crash in combat on Forever, and the window itself is
--- never protected, so it stays usable in combat (right-click targeting is a separate secure button).
+-- launcher icon (the minimap button and addon drawer entry are in Minimap.lua). Own flat frames only: Blizzard
+-- menus crash in combat on Forever, and the window itself is never protected, so it stays usable in combat
+-- (right-click targeting is a separate secure button).
 -- Whispering only opens a box on them (chat's, or EzAccent's/EzOOC's/EzTongues' own); you type and send it yourself.
 local _, ns = ...
 
@@ -781,20 +782,25 @@ local iconCheck = Check(options, "Show the launcher icon",
     function(v) EzAcquaintancesDB.hideIcon = not v ns.UpdateIcon() end)
 iconCheck:SetPoint("TOPLEFT", 0, -60)
 checks[#checks + 1] = iconCheck
+local minimapCheck = Check(options, "Show the minimap button",
+    function() return not EzAcquaintancesDB.hideMinimap end,
+    function(v) EzAcquaintancesDB.hideMinimap = not v ns.UpdateIcon() end)
+minimapCheck:SetPoint("TOPLEFT", 0, -80)
+checks[#checks + 1] = minimapCheck
 
 local heading = Text(options, "GameFontNormalSmall")
-heading:SetPoint("TOPLEFT", 0, -92)
+heading:SetPoint("TOPLEFT", 0, -112)
 heading:SetText("Log someone in Recent faces when they...")
 for i, key in ipairs(ns.TRIGGER_ORDER) do
     local c = Check(options, ns.TRIGGERS[key].label,
         function() return ns.TriggerOn(key) end,
         function(v) EzAcquaintancesDB.triggers[key] = v end)
-    c:SetPoint("TOPLEFT", 0, -92 - i * 20)
+    c:SetPoint("TOPLEFT", 0, -112 - i * 20)
     checks[#checks + 1] = c
 end
 
 local hint = Text(options, "GameFontDisableSmall")
-hint:SetPoint("TOPLEFT", 0, -112 - #ns.TRIGGER_ORDER * 20 - 8)
+hint:SetPoint("TOPLEFT", 0, -132 - #ns.TRIGGER_ORDER * 20 - 8)
 hint:SetPoint("RIGHT", -8, 0)
 hint:SetJustifyH("LEFT")
 hint:SetText(("Recent faces you don't add to the book are forgotten after %d days. Each character keeps its "
@@ -938,7 +944,8 @@ icon.tex:SetPoint("BOTTOMRIGHT", -1, 1)
 icon.tex:SetTexture(ns.ICON)
 icon.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-icon:SetScript("OnClick", function(_, button)
+-- What every launcher does (this icon, the minimap button, the addon drawer): click = book, right-click = options.
+function ns.Launch(button)
     if button == "RightButton" then
         mode = "options"
         if not book:IsShown() then book:Show() end
@@ -946,15 +953,22 @@ icon:SetScript("OnClick", function(_, button)
     else
         ns.ToggleBook()
     end
-end)
-icon:SetScript("OnEnter", function(self)
-    self:SetAlpha(1)
-    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+end
+
+-- Fills GameTooltip for a launcher; drag: it can be dragged.
+function ns.LauncherTooltip(drag)
     GameTooltip:AddLine("EzAcquaintances")
     GameTooltip:AddLine("Click: your book", 0.8, 0.8, 0.8)
     GameTooltip:AddLine("Right-click: options", 0.8, 0.8, 0.8)
-    GameTooltip:AddLine("Drag: move", 0.8, 0.8, 0.8)
+    if drag then GameTooltip:AddLine("Drag: move", 0.8, 0.8, 0.8) end
     GameTooltip:Show()
+end
+
+icon:SetScript("OnClick", function(_, button) ns.Launch(button) end)
+icon:SetScript("OnEnter", function(self)
+    self:SetAlpha(1)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    ns.LauncherTooltip(true)
 end)
 icon:SetScript("OnLeave", function(self)
     self:SetAlpha(0.7)
@@ -963,10 +977,12 @@ end)
 
 function ns.UpdateIcon()
     icon:SetShown(not EzAcquaintancesDB.hideIcon)
+    if ns.UpdateMinimap then ns.UpdateMinimap() end
 end
 
 function ns.ApplyPositions()
     Place(icon, "iconPos", "BOTTOMRIGHT", ChatFrame1, "TOPRIGHT", -28, 28)
+    if ns.PlaceMinimap then ns.PlaceMinimap() end
     Place(book, "framePos", "CENTER", UIParent, "CENTER", 0, 60)
     if ns.PlaceBadge then ns.PlaceBadge() end
 end

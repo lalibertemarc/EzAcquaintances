@@ -4,10 +4,14 @@
 ## Author: Marc
 ## Version: @project-version@
 ## IconTexture: Interface\Icons\INV_Misc_Book_09
+## AddonCompartmentFunc: EzAcquaintances_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: EzAcquaintances_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: EzAcquaintances_OnAddonCompartmentLeave
 ## SavedVariables: EzAcquaintancesDB
 ## SavedVariablesPerCharacter: EzAcquaintancesCharDB
 
 Data.lua
 Core.lua
 UI.lua
+Minimap.lua
 Tooltip.lua

@@ -7,6 +7,9 @@ globals = {
     "EzAcquaintancesCharDB",
     "EzAcquaintances_Toggle",
     "EzAcquaintancesAPI",
+    "EzAcquaintances_OnAddonCompartmentClick",
+    "EzAcquaintances_OnAddonCompartmentEnter",
+    "EzAcquaintances_OnAddonCompartmentLeave",
     "SLASH_EZACQUAINTANCES1",
     "SLASH_EZACQUAINTANCES2",
     "SlashCmdList",
@@ -21,6 +24,7 @@ read_globals = {
     "CreateFrame", "InCombatLockdown", "UIParent", "UISpecialFrames", "GameTooltip", "DEFAULT_CHAT_FRAME", "ChatFrame1", "TargetFrame",
     "ChatFrameUtil", "ChatFrame_SendTell",
     "RAID_CLASS_COLORS", "TooltipDataProcessor", "Enum",
+    "Minimap", "GetCursorPosition", "GetMinimapShape",
     -- Namespaced APIs
     "C_Timer", "C_CVar", "issecretvalue",
     -- Global APIs

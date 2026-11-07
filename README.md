@@ -47,9 +47,9 @@ Other addons can add a tab of their own to the book with `EzAcquaintancesAPI.Add
 | `/acq tag <name> <tag>` | toggle a tag; a new word becomes a tag of your own |
 | `/acq forget <name>` | remove them completely |
 | `/acq who <name>` | print what you know about them |
-| `/acq icon`, `badge`, `tooltip`, `quiet` | toggle the launcher icon, target badge, tooltip line, new-face messages |
-| `/acq reset` | reset window, icon and badge positions |
+| `/acq icon`, `minimap`, `badge`, `tooltip`, `quiet` | toggle the launcher icon, minimap button, target badge, tooltip line, new-face messages |
+| `/acq reset` | reset window, icon, minimap button and badge positions |
 
 Names with a surname go in quotes: `/acq note "Sephrina Gam" owes me 5g`. A first name alone works too.
 
-Key binding: Options > Keybindings > EzAcquaintances. Right-click the launcher icon for options, where each way of meeting someone can be switched off.
+Key binding: Options > Keybindings > EzAcquaintances. The book also opens from the launcher icon above the chat, the minimap button (drag it around the minimap's edge) and, in Forever, the addon drawer by the minimap; right-click any of them for options, where each way of meeting someone can be switched off and the launcher icon and minimap button can be hidden.

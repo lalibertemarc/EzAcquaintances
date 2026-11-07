@@ -448,8 +448,8 @@ end
 ---------------------------------------------------------------------------
 -- Saved variables and pruning
 ---------------------------------------------------------------------------
-local ACCOUNT_DEFAULTS = { tooltip = true, badge = true, hideIcon = false, announce = true, tab = "book",
-    whisperWith = "chat" }
+local ACCOUNT_DEFAULTS = { tooltip = true, badge = true, hideIcon = false, hideMinimap = false, announce = true,
+    tab = "book", whisperWith = "chat" }
 
 local function InitDB()
     EzAcquaintancesDB = EzAcquaintancesDB or {}
@@ -565,8 +565,9 @@ local HELP = {
     "/acq tag <name> <tag> - toggle a tag (new words become your own tags)",
     "/acq forget <name> - remove them completely",
     "/acq who <name> - what you know about them",
-    "/acq icon | badge | tooltip | quiet - toggle the launcher icon, target badge, tooltip line, new-face messages",
-    "/acq reset - reset window and icon positions",
+    "/acq icon | minimap | badge | tooltip | quiet - toggle the launcher icon, minimap button, target badge,"
+        .. " tooltip line, new-face messages",
+    "/acq reset - reset window, icon, minimap button and badge positions",
     'Names with a surname go in quotes: /acq note "Sephrina Gam" owes me 5g',
 }
 
@@ -625,11 +626,17 @@ local COMMANDS = {
         Print(EzAcquaintancesDB.hideIcon and "Icon hidden. Use the key binding or /acq." or "Icon shown.")
         if ns.UpdateIcon then ns.UpdateIcon() end
     end,
+    minimap = function()
+        EzAcquaintancesDB.hideMinimap = not EzAcquaintancesDB.hideMinimap
+        Print(EzAcquaintancesDB.hideMinimap and "Minimap button hidden." or "Minimap button shown.")
+        if ns.UpdateIcon then ns.UpdateIcon() end
+    end,
     badge = function() Toggle("badge", "Target badge on.", "Target badge off.") end,
     tooltip = function() Toggle("tooltip", "Tooltip line on.", "Tooltip line off.") end,
     quiet = function() Toggle("announce", "New faces are announced in chat.", "New faces are logged quietly.") end,
     reset = function()
         EzAcquaintancesDB.framePos, EzAcquaintancesDB.iconPos, EzAcquaintancesDB.badgePos = nil, nil, nil
+        EzAcquaintancesDB.minimapAngle = nil
         if ns.ApplyPositions then ns.ApplyPositions() end
         Print("Positions reset.")
     end,
