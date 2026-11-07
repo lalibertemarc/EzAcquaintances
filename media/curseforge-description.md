@@ -4,7 +4,7 @@
 
 Last Tuesday you spent an hour by the Crossroads fire with a grumpy tauren hunter who swore he'd seen a ghost wolf in the Barrens. Great scene. Today he waves at you outside Orgrimmar and you have no idea who he is. His name? Gone. Where you met? Gone. The ghost wolf? You're pretty sure there was a wolf.
 
-Forever turned off the old friend list, so there's nowhere left to keep the people you roleplay with. **EzAcquaintances** is a contact book for your character. The addon notes who you met. You write who they are.
+Forever's Recent Allies list is handy for finding who you just played with. **EzAcquaintances** takes that idea further: a contact book for your character that keeps people for as long as you like, and remembers who they are *to you*. The addon notes who you met. You write who they are.
 
 > **Mornhoof Grimtotem**, *"the Wolf-Seer"*
 > Friend · tags: *storyteller, owes me gold*
