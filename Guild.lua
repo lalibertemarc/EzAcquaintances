@@ -15,7 +15,6 @@ local DAY = 86400
 local members = {}  -- this guild's members but you, as read last: see Read
 local info = { total = 0, online = 0, hidden = 0 } -- counts from the last read
 local guildName     -- nil when you aren't in a guild
-local myKey
 
 ---------------------------------------------------------------------------
 -- System message patterns (as EzChronicle's)
@@ -171,15 +170,19 @@ local function Read()
     local g, now, present = Record(guildName), time(), {}
     wipe(members)
     for _, m in ipairs(list) do
-        m.key = ns.Key(m.name)
+        m.key = ns.KeyFor(m.name) -- the book's key for them (the roster may give a first name alone)
         present[m.key] = true
+        local first = ns.FirstOf(m.key)
+        if not g.members[m.key] and first ~= m.key and g.members[first] then -- kept by first name before 2026-11-09
+            g.members[m.key], g.members[first] = g.members[first], nil
+        end
         local rec = g.members[m.key]
         if not rec then
             rec = { seen = now, old = g.baseline or nil }
             g.members[m.key] = rec
         end
         m.rec = rec
-        if m.key ~= myKey then members[#members + 1] = m end
+        if not ns.IsMe(m.key) then members[#members + 1] = m end
     end
     -- A complete read: people missing from it left; and from now on newcomers are really new.
     if #list >= total then
@@ -223,7 +226,7 @@ local function OnSystem(msg)
     local name = args and args[1] and ns.CleanName(MessageName(args[1]))
     local gname = name and GuildName()
     if not gname then return end
-    local key, now = ns.Key(name), time()
+    local key, now = ns.KeyFor(name), time()
     local g = Record(gname)
     local rec = g.members[key] or { seen = now }
     rec.joined, rec.old = now, nil
@@ -623,7 +626,6 @@ end)
 -- Called from ns.OnLogin (after the saved variables are set up).
 function ns.GuildLogin()
     EzAcquaintancesCharDB.guilds = EzAcquaintancesCharDB.guilds or {}
-    myKey = ns.Key(UnitName("player"))
     guildName = GuildName()
     for _, e in ipairs({ "GUILD_ROSTER_UPDATE", "PLAYER_GUILD_UPDATE", "CHAT_MSG_SYSTEM" }) do
         pcall(ev.RegisterEvent, ev, e)

@@ -24,9 +24,46 @@ ns.Readable = Readable
 ---------------------------------------------------------------------------
 -- Names
 ---------------------------------------------------------------------------
--- Forever puts a surname where Era puts the realm; first names are unique, so people are keyed by theirs.
+-- Forever puts a surname where Era puts the realm. First names aren't unique in Forever (two Grims with
+-- different surnames, 2026-11-09), so people are keyed by their whole lowercase name there: "grim sharpeye".
+-- Era keys by first name (its names are only unique per realm, and chat gives the realm, not a surname).
 function ns.Key(name)
-    return strlower(name:match("^[^%s%-]+") or name)
+    return strlower(ns.CleanName(name) or name)
+end
+
+-- The first-name part of a key.
+local function FirstOf(key)
+    return key:match("^[^%s%-]+") or key
+end
+ns.FirstOf = FirstOf
+
+-- Key of the record for name: its own; for a first name alone, the one person with that first name (nil
+-- second return when two share it); for a full name, a record kept from before its surname was known.
+-- Otherwise the key a new record would get.
+function ns.KeyFor(name)
+    local key = ns.Key(name)
+    local people = EzAcquaintancesCharDB.people
+    if people[key] or ns.ERA then return key end
+    local first = FirstOf(key)
+    if first ~= key then
+        return people[first] and not (people[first].name or ""):find(" ") and first or key
+    end
+    local found
+    for k in pairs(people) do
+        if FirstOf(k) == first then
+            if found then return key, true end -- ambiguous
+            found = k
+        end
+    end
+    return found or key
+end
+
+-- Same person: equal keys, or one is a first name alone and the other's first name.
+function ns.SameName(a, b)
+    a, b = ns.Key(a), ns.Key(b)
+    if a == b then return true end
+    local fa, fb = FirstOf(a), FirstOf(b)
+    return fa == fb and (fa == a or fb == b)
 end
 
 -- Display name from a unit, chat or a slash command: "First Surname" in Forever (chat links put a "-"
@@ -82,6 +119,11 @@ end
 
 local myKey, myFirst, myChar, myGUID -- your key, first name, the account index's name for you, your GUID
 
+-- A key that is you: your whole name, or your first name alone (chat or a typed name without the surname).
+function ns.IsMe(key)
+    return key == myKey or (myFirst ~= nil and key == strlower(myFirst))
+end
+
 ---------------------------------------------------------------------------
 -- Records
 ---------------------------------------------------------------------------
@@ -111,8 +153,23 @@ local function Index(key, p)
     }
 end
 
+-- Moves a record (and its index entry) to another key: a first-name-only record learning its surname,
+-- or an old first-name key. Keeps the one already at the new key when there is one.
+local function Rekey(old, new)
+    local people = EzAcquaintancesCharDB.people
+    if old == new or not people[old] then return new end
+    if not people[new] then people[new] = people[old] end
+    people[old] = nil
+    Index(old, nil)
+    Index(new, people[new])
+    return new
+end
+
 local function ApplyInfo(p, info)
-    if info.name and (not p.name or #info.name > #p.name) then p.name = info.name end -- keep the surname
+    -- Only a longer form of the same name (its surname): never another person's.
+    if info.name and (not p.name or (#info.name > #p.name and ns.SameName(info.name, p.name))) then
+        p.name = info.name
+    end
     p.race = info.race or p.race
     p.className = info.className or p.className
     p.class = info.class or p.class
@@ -144,8 +201,9 @@ function ns.Meet(info, via, quiet)
     local name = info and ns.CleanName(info.name)
     if not name then return end
     local key = ns.Key(name)
-    if key == myKey or key == "" or not ns.TriggerOn(via) then return end
+    if ns.IsMe(key) or key == "" or not ns.TriggerOn(via) then return end
     info.name = name
+    if FirstOf(key) == key then key = ns.KeyFor(name) else key = Rekey(ns.KeyFor(name), key) end
     local people, now = EzAcquaintancesCharDB.people, time()
     local p, isNew = people[key], false
     if not p then
@@ -171,7 +229,7 @@ end
 -- Someone you already know crossed your path (target, mouseover): last seen and what we can read.
 function ns.Seen(info)
     local name = info and ns.CleanName(info.name)
-    local key = name and ns.Key(name)
+    local key = name and ns.KeyFor(name)
     local p = key and EzAcquaintancesCharDB.people[key]
     if not p then return end
     info.name = name
@@ -207,17 +265,19 @@ function ns.Forget(key)
     Changed(key)
 end
 
--- Key and record for a name or "known as" alias you typed.
+-- Key and record for a name or "known as" alias you typed; nil, nil, true when a first name alone fits
+-- more than one person.
 function ns.Find(name)
     name = strtrim(name or "")
     if name == "" then return end
-    local key = ns.Key(name)
+    local key, ambiguous = ns.KeyFor(name)
     local people = EzAcquaintancesCharDB.people
     if people[key] then return key, people[key] end
     local lower = strlower(name)
     for k, p in pairs(people) do
         if p.alias and strlower(p.alias) == lower then return k, p end
     end
+    return nil, nil, ambiguous
 end
 
 ---------------------------------------------------------------------------
@@ -358,8 +418,11 @@ end
 local function Targeted(key, window)
     local tg = targeted[key]
     if tg and clock() - tg.t <= window then return tg.info end
+    for k, other in pairs(targeted) do -- chat may give a first name alone
+        if clock() - other.t <= window and ns.SameName(k, key) then return other.info end
+    end
     local info = ns.UnitInfo("target")
-    if info and ns.Key(info.name) == key then return info end
+    if info and ns.SameName(info.name, key) then return info end
 end
 
 local function Copy(t)
@@ -372,7 +435,7 @@ local function OnSay(name, guid)
     name = ns.CleanName(name)
     if not name then return end
     local key, window = ns.Key(name), ns.TRIGGERS.say.window
-    if key == myKey then
+    if ns.IsMe(key) then
         mySay = clock()
         Expire(saidBy, window)
         for k in pairs(saidBy) do
@@ -468,7 +531,35 @@ end
 
 -- Forgets Recent faces past INBOX_DAYS (and the oldest past INBOX_MAX), stale index sightings of your other
 -- characters, and caps the index. Book entries are only removed by hand.
+-- Records and index sightings kept under a key their name no longer gives (first-name keys from before
+-- 2026-11-09) move to their own. Cheap and idempotent, so it runs at every login rather than once.
+local function Migrate()
+    local people, seen = EzAcquaintancesCharDB.people, EzAcquaintancesDB.seen
+    local move = {}
+    for key, p in pairs(people) do
+        local new = type(p.name) == "string" and ns.Key(p.name)
+        if new and new ~= "" and new ~= key then move[key] = new end
+    end
+    for old, new in pairs(move) do Rekey(old, new) end
+    local sightings = {} -- collected first: new keys can't be added to seen while walking it
+    for key, chars in pairs(seen) do
+        for char, r in pairs(chars) do
+            local new = type(r.name) == "string" and ns.Key(r.name)
+            if new and new ~= "" and new ~= key then sightings[#sightings + 1] = { key, char, new } end
+        end
+    end
+    for _, s in ipairs(sightings) do
+        local key, char, new = s[1], s[2], s[3]
+        local r = seen[key][char]
+        seen[key][char] = nil
+        if next(seen[key]) == nil then seen[key] = nil end
+        seen[new] = seen[new] or {}
+        if not seen[new][char] then seen[new][char] = r end
+    end
+end
+
 local function Prune()
+    Migrate()
     local t, people, seen = time(), EzAcquaintancesCharDB.people, EzAcquaintancesDB.seen
     local inbox = {}
     for key, p in pairs(people) do
@@ -526,23 +617,33 @@ end
 local function InfoFor(name)
     local t = ns.UnitInfo("target")
     if not name then return t end
-    if t and ns.Key(t.name) == ns.Key(name) then return t end
+    if t and ns.SameName(t.name, name) then return t end
     return { name = name }
+end
+
+-- "Can't add that name.", or how to tell two people with one first name apart.
+local function CantAdd(name, ambiguous)
+    if ambiguous then
+        return Print(('More than one person is called %s: write the full name in quotes, "%s Surname".')
+            :format(name, name))
+    end
+    Print("Can't add that name.")
 end
 
 -- Record for a typed name, made (and put in the Book) when it's someone new.
 local function Ensure(name)
-    local key, p = ns.Find(name)
+    local key, p, ambiguous = ns.Find(name)
     if p then return key, p end
     local info = InfoFor(name)
-    if not info then return end
+    if not info or (ambiguous and info.name == name) then return nil, nil, ambiguous end -- your target settles it
     p, key = ns.Meet(info, "manual")
     if p then ns.Promote(key) end
     return key, p
 end
 
 local function PrintWho(name)
-    local key, p = ns.Find(name)
+    local key, p, ambiguous = ns.Find(name)
+    if ambiguous then return CantAdd(name, true) end
     key = key or ns.Key(name)
     if p then
         local rel = p.rel and p.rel ~= "" and (" - " .. p.rel) or ""
@@ -586,8 +687,10 @@ local COMMANDS = {
         local name, note = SplitName(rest)
         local info = InfoFor(name)
         if not info then return Print("Usage: /acq add <name> [note], or target someone first.") end
+        local ambiguous = select(3, ns.Find(info.name))
+        if ambiguous then return CantAdd(info.name, true) end
         local p, key = ns.Meet(info, "manual")
-        if not p then return Print("Can't add that name.") end
+        if not p then return CantAdd(info.name) end
         ns.Promote(key)
         if note and note ~= "" then p.note = note:sub(1, ns.NOTE_MAX) end
         Changed(key)
@@ -596,8 +699,8 @@ local COMMANDS = {
     note = function(rest)
         local name, text = SplitName(rest)
         if not name then return Print("Usage: /acq note <name> <text>") end
-        local key, p = Ensure(name)
-        if not p then return Print("Can't add that name.") end
+        local key, p, ambiguous = Ensure(name)
+        if not p then return CantAdd(name, ambiguous) end
         ns.Promote(key)
         p.note = text ~= "" and text:sub(1, ns.NOTE_MAX) or nil
         Changed(key)
@@ -607,14 +710,16 @@ local COMMANDS = {
         local name, text = SplitName(rest)
         local tag = ns.Tag(text)
         if not (name and tag) then return Print("Usage: /acq tag <name> <tag>") end
-        local key, p = Ensure(name)
-        if not p then return Print("Can't add that name.") end
+        local key, p, ambiguous = Ensure(name)
+        if not p then return CantAdd(name, ambiguous) end
         ns.Promote(key)
         local on = ns.ToggleTag(key, tag)
         Print(("%s |cffffffff%s|r %s %s."):format(on and "Tagged" or "Untagged", p.name, on and "as" or "from", tag))
     end,
     forget = function(rest)
-        local key, p = ns.Find(SplitName(rest))
+        local name = SplitName(rest)
+        local key, p, ambiguous = ns.Find(name)
+        if ambiguous then return CantAdd(name, true) end
         if not p then return Print(("You don't know anyone called %s."):format(rest)) end
         ns.Forget(key)
         Print(("Forgot %s."):format(p.name))
@@ -709,7 +814,7 @@ ev:SetScript("OnEvent", function(_, event, ...)
     if event ~= "PLAYER_LOGIN" then return HANDLERS[event](...) end
     InitDB()
     myFirst = UnitName("player")
-    myKey = ns.Key(myFirst)
+    myKey = ns.Key(UnitFullName("player") or myFirst)
     myChar = ns.ERA and (myFirst .. "-" .. GetRealmName()) or myFirst
     myGUID = UnitGUID("player")
     Prune()

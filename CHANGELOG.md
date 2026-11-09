@@ -1,5 +1,11 @@
 # EzAcquaintances
 
+## v1.1.1
+
+- **Two people with the same first name are now two people.** Meeting a second Grim (say, Grim Sharpeye and Grim Wolfspeaker) used to land on the first Grim's page and could swap their surname. The book now goes by full name, so each Grim keeps their own page, notes and tags, and "your Bob met them" only shows for the right one. Your book is moved over by itself at login.
+- Pages that were already merged before this fix can't be pulled apart: if a page mixes two people, keep it for one of them and meet the other again.
+- In slash commands, a first name that fits more than one person asks for the full name in quotes: `/acq note "Grim Sharpeye" owes me 5g`.
+
 ## v1.1.0
 
 - **Guild tab.** Your guild's roster right in the book: name, rank, level, class, the zone of who's online and when the others were last on. Online members come first; click a column header to sort by it, and filter on who's online, who's new this week, who's been away 14 days or more, or who's in your book. A search box finds names, ranks, guild notes and your own notes.

@@ -29,7 +29,7 @@ end
 local function PersonFor(unit)
     local info = unit and ns.Readable(unit) and ns.UnitInfo(unit)
     if not info then return end
-    local key = ns.Key(info.name)
+    local key = ns.KeyFor(info.name)
     return ns.Person(key), key
 end
 

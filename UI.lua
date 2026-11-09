@@ -482,7 +482,7 @@ targetButton:SetScript("PostClick", function(self, button)
     end
     if button ~= "RightButton" then return end
     local info = ns.UnitInfo("target")
-    if not (info and ns.Key(info.name) == ns.Key(name)) then ns.Print(name .. " isn't close enough to target.") end
+    if not (info and ns.SameName(info.name, name)) then ns.Print(name .. " isn't close enough to target.") end
 end)
 targetButton:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
@@ -964,11 +964,15 @@ EzAcquaintancesAPI = {
         Refresh(true)
     end,
     -- This character's record of name, or nil.
-    Person = function(name) return ns.Person(ns.Key(name)) end,
+    -- name: "First Surname", or a first name alone (nil when two people share it).
+    Person = function(name) return type(name) == "string" and ns.Person(ns.KeyFor(name)) or nil end,
+    -- The book's key for name (lowercase "first surname"; first name in Era).
+    Key = function(name) return type(name) == "string" and ns.KeyFor(name) or nil end,
     -- Opens the book at name; false when they aren't in it.
     ShowPerson = function(name)
-        if not ns.Person(ns.Key(name)) then return false end
-        ns.ToggleBook(ns.Key(name))
+        local key = type(name) == "string" and ns.KeyFor(name)
+        if not ns.Person(key) then return false end
+        ns.ToggleBook(key)
         return true
     end,
     ClassText = function(p) return ns.ClassText(p) end,
