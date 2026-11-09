@@ -1,6 +1,6 @@
 # EzAcquaintances
 
-## Unreleased
+## v1.1.0
 
 - **Guild tab.** Your guild's roster right in the book: name, rank, level, class, the zone of who's online and when the others were last on. Online members come first; click a column header to sort by it, and filter on who's online, who's new this week, who's been away 14 days or more, or who's in your book. A search box finds names, ranks, guild notes and your own notes.
 - **Join dates.** When someone joins while you're online ("X has joined the guild."), the tab remembers the day. People who were already in the guild show "before" the day your book first read the roster, and anyone who joined while you were away shows "by" the day you first saw them: no made-up dates.

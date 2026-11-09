@@ -46,6 +46,14 @@ Search the book, filter by tag, and pick up a scene right where you left it.
 - **Right-click a name** in the book to target them when they're nearby.
 - **Whisper them from the book** (the Whisper button, or middle-click their name). It only opens the whisper; you write and send it yourself.
 
+## Your guild, in your book
+
+A **Guild** tab lists your guildmates: rank, level, class, where the online ones are and when the others were last on. Sort by any column, filter on who's online, new this week, away 14+ days or already in your book, and search names, ranks and notes.
+
+- **Join dates.** When someone joins while you're online, the book remembers the day. Members who were already there show "before" the day your book first saw the roster: no made-up dates.
+- **Write about your guildmates.** Hover a member for your alias, relationship, tags and note. Click to open their page (a new face lands in Recent faces, ready for a note), middle-click to whisper, right-click to target.
+- **Read-only.** It never invites, promotes, kicks or speaks for you.
+
 ## One book per character
 
 Your paladin and your rogue don't know the same people, so each character keeps their own book. Your characters still compare notes, though: the book tells you "*Bob met them 2026-09-10 in Goldshire*" when one of your other characters has crossed their path.
@@ -69,6 +77,7 @@ EzAcquaintances never sends anything to chat, and nobody else needs the addon. I
 | `/acq note <name> <text>` | Set their note (empty clears it) |
 | `/acq tag <name> <tag>` | Toggle a tag; a new word becomes a tag of your own |
 | `/acq who <name>` | Print what you know about them |
+| `/acq guild` | Open the Guild tab |
 | `/acq forget <name>` | Remove them completely |
 | `/acq icon` / `minimap` / `badge` / `tooltip` | Show or hide the launcher icon, minimap button, target badge, tooltip line |
 | `/acq quiet` | Hide or show the "new face" chat messages |
