@@ -10,7 +10,10 @@ local PAD, GAP = 8, 6
 local TOP_H = 22
 local LIST_W, ROW_H = 220, 20
 local BODY_TOP = -(PAD + TOP_H + GAP)
-local LIST_ROWS = math.floor((H + BODY_TOP - PAD) / ROW_H)
+local LIST_ROWS = math.floor((H + BODY_TOP - PAD) / ROW_H) -- rows a tab's panel has (api.ROWS)
+local FILTER_H = TOP_H + 4 -- search box + tag filter row over the Book/Recent list
+local FILTER_W = 80 -- tag filter button
+local LIST_SHOWN = math.floor((H + BODY_TOP - PAD - FILTER_H) / ROW_H) -- Book/Recent rows under it
 local DETAIL_X = PAD + LIST_W + GAP + 4
 local LABEL_W = 82
 local MAX_OTHERS = 3 -- other characters' meetings listed in the detail pane
@@ -266,7 +269,9 @@ end
 Tab("book")
 Tab("recent")
 
-local search = SingleLineBox(book, "Search names, notes, places", 6)
+-- Search box and tag filter sit over the Book/Recent list, not in the tab bar: with the Guild tab and other
+-- addons' tabs (Buddies, Graduates) the bar had no room left for them.
+local search = SingleLineBox(book, "Search names, notes", 6)
 search:HookScript("OnTextChanged", function()
     offset = 0
     Refresh()
@@ -275,9 +280,9 @@ search:SetScript("OnEscapePressed", function(self)
     if self:GetText() ~= "" then self:SetText("") else self:ClearFocus() end
 end)
 
-local tagFilter = TextButton(book, "All tags", 110)
+local tagFilter = TextButton(book, "All tags", FILTER_W)
 tagFilter:SetHeight(TOP_H)
-tagFilter:SetPoint("RIGHT", gear, "LEFT", -6, 0)
+tagFilter:SetPoint("TOPLEFT", PAD + LIST_W - FILTER_W, BODY_TOP)
 tagFilter:SetScript("OnClick", function(self)
     local items = { { label = "All tags", checked = not filterTag, onClick = function() filterTag = nil Refresh() end } }
     for _, tag in ipairs(ns.AllTags()) do
@@ -289,20 +294,15 @@ tagFilter:SetScript("OnClick", function(self)
     OpenPopup(self, items)
 end)
 
--- The search box fills the bar between the last tab and the tag filter.
-local function PlaceSearch()
-    search:ClearAllPoints()
-    search:SetPoint("LEFT", lastTab, "RIGHT", 8, 0)
-    search:SetPoint("RIGHT", tagFilter, "LEFT", -6, 0)
-end
-PlaceSearch()
+search:SetPoint("TOPLEFT", PAD, BODY_TOP)
+search:SetPoint("RIGHT", tagFilter, "LEFT", -4, 0)
 
 ---------------------------------------------------------------------------
 -- List
 ---------------------------------------------------------------------------
 local list = CreateFrame("Frame", nil, book)
-list:SetPoint("TOPLEFT", PAD, BODY_TOP)
-list:SetSize(LIST_W, LIST_ROWS * ROW_H)
+list:SetPoint("TOPLEFT", PAD, BODY_TOP - FILTER_H)
+list:SetSize(LIST_W, LIST_SHOWN * ROW_H)
 list:EnableMouseWheel(true)
 
 local divider = book:CreateTexture(nil, "ARTWORK")
@@ -317,7 +317,7 @@ empty:SetPoint("RIGHT", -8, 0)
 empty:SetJustifyH("LEFT")
 
 local rows = {}
-for i = 1, LIST_ROWS do
+for i = 1, LIST_SHOWN do
     local b = CreateFrame("Button", nil, list)
     b:SetSize(LIST_W, ROW_H)
     b:SetPoint("TOPLEFT", 0, -(i - 1) * ROW_H)
@@ -388,7 +388,7 @@ function ns.Whisper(key, way)
 end
 
 local function Scroll(delta)
-    offset = math.max(0, math.min(offset - delta * 3, #keys - LIST_ROWS))
+    offset = math.max(0, math.min(offset - delta * 3, #keys - LIST_SHOWN))
     Refresh()
 end
 list:SetScript("OnMouseWheel", function(_, delta) Scroll(delta) end)
@@ -898,7 +898,7 @@ function Refresh(force)
     if not listed then
         selected, force = keys[1], true
     end
-    offset = math.max(0, math.min(offset, #keys - LIST_ROWS))
+    offset = math.max(0, math.min(offset, #keys - LIST_SHOWN))
 
     local people = EzAcquaintancesCharDB.people
     for i, b in ipairs(rows) do
@@ -949,7 +949,6 @@ EzAcquaintancesAPI = {
     AddTab = function(def)
         if tabs[def.key] then return end
         Tab(def.key)
-        PlaceSearch()
         local panel = CreateFrame("Frame", nil, book)
         panel:SetPoint("TOPLEFT", PAD, BODY_TOP)
         panel:SetPoint("BOTTOMRIGHT", -PAD, PAD)
