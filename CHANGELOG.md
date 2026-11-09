@@ -1,5 +1,13 @@
 # EzAcquaintances
 
+## Unreleased
+
+- **Guild tab.** Your guild's roster right in the book: name, rank, level, class, the zone of who's online and when the others were last on. Online members come first; click a column header to sort by it, and filter on who's online, who's new this week, who's been away 14 days or more, or who's in your book. A search box finds names, ranks, guild notes and your own notes.
+- **Join dates.** When someone joins while you're online ("X has joined the guild."), the tab remembers the day. People who were already in the guild show "before" the day your book first read the roster, and anyone who joined while you were away shows "by" the day you first saw them: no made-up dates.
+- **Write about your guildmates.** Members in your book show their alias, relationship, tags and note on hover. Click a member to open them in your book (someone new lands in Recent faces, so you can add a note right away). Middle-click whispers them, right-click targets them when they're nearby, as in the book.
+- The tab only reads the roster: it never invites, promotes, kicks or sends anything. `/acq guild` opens it.
+- In Classic Era, if Blizzard's guild window hides offline members, the tab says how many are hidden: tick "Show Offline Members" there to see them all.
+
 ## v1.0.0
 
 - **Remember who you roleplayed with.** People you group, trade or duel with, who buff you (or you thank with Buff Me Please), whisper back and forth, who emote at you (or name you in an `/e` line), or who you target and talk to in `/say` land in **Recent faces** with where and when you first met, when you last saw them, how often you've met and their race, class and level when the game tells us. Nothing is ever sent to chat.

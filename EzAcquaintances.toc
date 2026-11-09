@@ -16,3 +16,4 @@ Core.lua
 UI.lua
 Minimap.lua
 Tooltip.lua
+Guild.lua

@@ -17,13 +17,14 @@ ns.TRIGGERS = {
     emote   = { label = "Emoted at you", on = true, custom = true }, -- custom: an /e line naming you counts too
     say     = { label = "Talked in /say while targeted", on = true, window = 60 },
     manual  = { label = "Added by hand", on = true },
+    guild   = { label = "Opened from the Guild tab", on = true }, -- a click, never automatic; not on the options page
 }
 ns.TRIGGER_ORDER = { "group", "whisper", "trade", "duel", "buff", "emote", "say" } -- options page; manual is always on
 
 -- Short verbs for "first met ... (whispered)".
 ns.TRIGGER_VERB = {
     group = "grouped", whisper = "whispered", trade = "traded", duel = "dueled", buff = "buffed you",
-    emote = "emoted at you", say = "talked", manual = "added by hand",
+    emote = "emoted at you", say = "talked", manual = "added by hand", guild = "guildmate",
 }
 
 ns.MEET_GAP = 30 * 60      -- seconds apart before seeing someone again counts as another meeting
@@ -34,6 +35,11 @@ ns.INDEX_DAYS = 180        -- account index forgets other characters' unsaved si
 ns.INDEX_MAX = 3000        -- most people in the account index
 ns.NOTE_MAX = 1000         -- letters in a note
 ns.ALIAS_MAX = 48
+
+-- Guild tab (Guild.lua).
+ns.GUILD_ASK_GAP = 15      -- seconds between roster requests (the server throttles them too)
+ns.GUILD_NEW_DAYS = 7      -- "New this week": joined (or first seen) within this many days
+ns.GUILD_INACTIVE_DAYS = 14 -- "Inactive": offline at least this many days
 
 -- Preset tags; your own ones are added to EzAcquaintancesDB.customTags.
 ns.TAGS = {

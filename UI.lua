@@ -376,10 +376,15 @@ local function WhisperWays()
     return ways
 end
 
+-- Opens a whisper to the full "First Surname" your usual way (or way).
+function ns.WhisperName(name, way)
+    local open = name and (way or WhisperWay()).get()
+    if open then open((name:gsub("%c", ""))) end
+end
+
 function ns.Whisper(key, way)
     local p = key and ns.Person(key)
-    local open = p and (way or WhisperWay()).get()
-    if open then open((p.name:gsub("%c", ""))) end
+    if p then ns.WhisperName(p.name, way) end
 end
 
 local function Scroll(delta)
@@ -392,6 +397,8 @@ list:SetScript("OnMouseWheel", function(_, delta) Scroll(delta) end)
 -- addons no friendly nameplates), and secure frames can't change in combat. So the rows stay plain and,
 -- out of combat, one secure button covers the row under the mouse (left-click still selects). It sits on
 -- UIParent, placed by coordinates: inside or anchored to the book, it would lock the book in combat.
+-- Rows of other tabs (the Guild tab) can be covered too: such a row carries fullName (who to target) and
+-- may have onPick(row, button) (a click), onWhisper(row), onWheel(delta) and tooltip(row, GameTooltip).
 local targetButton = CreateFrame("Button", "EzAcquaintancesTargetButton", UIParent, "SecureActionButtonTemplate")
 targetButton:SetFrameStrata("HIGH")
 targetButton:RegisterForClicks("LeftButtonUp",
@@ -416,7 +423,9 @@ end
 local whisperKey = CreateFrame("Button", "EzAcquaintancesWhisperKey", UIParent)
 whisperKey:RegisterForClicks("AnyUp")
 whisperKey:SetScript("OnClick", function()
-    local key = targetButton.row and targetButton.key
+    local row = targetButton.row
+    if row and row.onWhisper then return row.onWhisper(row) end
+    local key = row and targetButton.key
     if not key then return end
     selected = key
     Refresh(true)
@@ -432,37 +441,52 @@ function Uncover()
     end
 end
 
--- Puts the target button over row b and points it at b's person.
+-- Who row b targets: its own fullName (other tabs' rows), else its person's name.
+local function RowName(b)
+    if b.fullName then return b.fullName end
+    local p = b.key and ns.Person(b.key)
+    return p and p.name
+end
+
+-- Puts the target button over row b and points it at b's person; true when it did.
 local function Cover(b)
     if InCombatLockdown() then return end
-    local p = b:IsVisible() and b.key and ns.Person(b.key)
-    if not p then return Uncover() end
+    local name = b:IsVisible() and RowName(b)
+    if not name then return Uncover() end
     if targetButton.row and targetButton.row ~= b then targetButton.row:UnlockHighlight() end
     local ratio = b:GetEffectiveScale() / targetButton:GetEffectiveScale()
     targetButton:ClearAllPoints()
     targetButton:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", b:GetLeft() * ratio, b:GetTop() * ratio)
     targetButton:SetSize(b:GetWidth() * ratio, b:GetHeight() * ratio)
     targetButton:SetFrameLevel(b:GetFrameLevel() + 5)
-    targetButton:SetAttribute("macrotext2", TargetMacro(p.name))
-    targetButton.row, targetButton.key, targetButton.name = b, b.key, p.name
+    targetButton:SetAttribute("macrotext2", TargetMacro(name))
+    targetButton.row, targetButton.key, targetButton.name = b, b.key, name
     b:LockHighlight()
     targetButton:Show()
     SetOverrideBindingClick(whisperKey, true, "BUTTON3", "EzAcquaintancesWhisperKey", "MiddleButton")
+    return true
 end
+ns.CoverRow = Cover
 
 for _, b in ipairs(rows) do b:SetScript("OnEnter", Cover) end
 
 -- The macro has run by now; if they aren't the target, /targetexact didn't find them.
 targetButton:SetScript("PostClick", function(self, button)
-    local key, name = self.key, self.name
-    selected = key
-    Refresh(true)
+    local row, name = self.row, self.name
+    if not name then return end
+    if row and row.onPick then
+        row.onPick(row, button)
+    else
+        selected = self.key
+        Refresh(true)
+    end
     if button ~= "RightButton" then return end
     local info = ns.UnitInfo("target")
-    if not (info and ns.Key(info.name) == key) then ns.Print(name .. " isn't close enough to target.") end
+    if not (info and ns.Key(info.name) == ns.Key(name)) then ns.Print(name .. " isn't close enough to target.") end
 end)
 targetButton:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+    if self.row and self.row.tooltip then self.row.tooltip(self.row, GameTooltip) end
     GameTooltip:AddLine("Right-click: target them if they're nearby", 0.8, 0.8, 0.8)
     local way = WhisperWay()
     GameTooltip:AddLine("Middle-click: whisper them" .. (way.key == "chat" and "" or " (" .. way.label .. ")"),
@@ -473,7 +497,10 @@ targetButton:SetScript("OnLeave", function(self)
     GameTooltip:Hide()
     if not self:IsMouseOver() then Uncover() end
 end)
-targetButton:SetScript("OnMouseWheel", function(_, delta) Scroll(delta) end)
+targetButton:SetScript("OnMouseWheel", function(self, delta)
+    if self.row and self.row.onWheel then return self.row.onWheel(delta) end
+    Scroll(delta)
+end)
 targetButton:RegisterEvent("PLAYER_REGEN_DISABLED") -- last moment it can still be hidden
 targetButton:SetScript("OnEvent", Uncover)
 
@@ -853,8 +880,14 @@ function Refresh(force)
     options:SetShown(mode == "options")
     for _, x in pairs(extraTabs) do x.panel:SetShown(x == own) end
     if not isList then
+        if own then
+            own.def.refresh(own.panel)
+            -- A row of this tab under the mouse keeps the target button (its list may have moved under it).
+            local row = targetButton.row
+            if row and row.fullName and row:IsVisible() then Cover(row) else Uncover() end
+            return
+        end
         Uncover()
-        if own then return own.def.refresh(own.panel) end
         for _, c in ipairs(checks) do c.Update() end
         return
     end
@@ -940,6 +973,7 @@ EzAcquaintancesAPI = {
     end,
     ClassText = function(p) return ns.ClassText(p) end,
     ROW_H = ROW_H, ROWS = LIST_ROWS, LIST_W = LIST_W,
+    PANEL_W = W - 2 * PAD, PANEL_H = H + BODY_TOP - PAD, -- a tab's panel (its GetWidth can be 0 before the first draw)
     Skin = Skin, Text = Text, Hover = Hover, TextButton = TextButton, SingleLineBox = SingleLineBox,
 }
 
@@ -1004,7 +1038,10 @@ function ns.ApplyPositions()
     if ns.PlaceBadge then ns.PlaceBadge() end
 end
 
+ns.OpenPopup = OpenPopup
+
 function ns.OnLogin()
+    if ns.GuildLogin then ns.GuildLogin() end
     ns.ApplyPositions()
     ns.UpdateIcon()
     if ns.InitTooltip then ns.InitTooltip() end

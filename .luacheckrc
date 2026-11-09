@@ -33,4 +33,7 @@ read_globals = {
     "IsInGroup", "IsInRaid", "GetNumGroupMembers", "GetNumSubgroupMembers", "StartDuel",
     "UnitGUID", "CombatLogGetCurrentEventInfo", "_G",
     "UnitInParty", "UnitInRaid", "UnitIsUnit", "UnitIsConnected", "UnitIsVisible", "GetRaidRosterInfo", "C_Map",
+    -- Guild tab
+    "IsInGuild", "GetGuildInfo", "GetNumGuildMembers", "GetGuildRosterInfo", "GetGuildRosterLastOnline",
+    "GetGuildRosterShowOffline", "C_GuildInfo", "C_Club", "C_CreatureInfo", "GetClassInfo",
 }

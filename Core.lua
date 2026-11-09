@@ -139,6 +139,7 @@ end
 
 -- A meaningful contact with someone. Returns their record, key and whether they're new; nil when the name
 -- can't be read, it's you, or that trigger is off. quiet: the caller announces new faces itself.
+-- info.place: where a new face is first met, instead of where you stand (the Guild tab: "<Guild>").
 function ns.Meet(info, via, quiet)
     local name = info and ns.CleanName(info.name)
     if not name then return end
@@ -149,6 +150,7 @@ function ns.Meet(info, via, quiet)
     local p, isNew = people[key], false
     if not p then
         local zone, sub = Where()
+        if info.place then zone, sub = info.place, nil end
         p = { first = { t = now, zone = zone, sub = sub }, via = via, met = 1, tags = {} }
         people[key], isNew = p, true
     elseif now - (p.last or 0) >= ns.MEET_GAP then
@@ -565,6 +567,7 @@ local HELP = {
     "/acq tag <name> <tag> - toggle a tag (new words become your own tags)",
     "/acq forget <name> - remove them completely",
     "/acq who <name> - what you know about them",
+    "/acq guild - your guild's roster, with join dates and what your book knows",
     "/acq icon | minimap | badge | tooltip | quiet - toggle the launcher icon, minimap button, target badge,"
         .. " tooltip line, new-face messages",
     "/acq reset - reset window, icon, minimap button and badge positions",
@@ -620,6 +623,9 @@ local COMMANDS = {
         local name = SplitName(rest) or (ns.UnitInfo("target") or {}).name
         if not name then return Print("Usage: /acq who <name>") end
         PrintWho(name)
+    end,
+    guild = function()
+        if ns.ShowGuild then ns.ShowGuild() end
     end,
     icon = function()
         EzAcquaintancesDB.hideIcon = not EzAcquaintancesDB.hideIcon

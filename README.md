@@ -35,6 +35,14 @@ Right-click a name in the list to target them when they're nearby (out of combat
 
 Each character keeps its own book. An account-wide index remembers which of your characters met whom, so the book can tell you "Bob met them 2026-09-10 in Goldshire".
 
+## Guild tab
+
+The **Guild** tab lists your guild's roster: name, rank, level, class, the zone of who's online and when the others were last on. Online members come first; click a column header to sort by it (again to reverse), and use the filter button for who's online, new this week, inactive 14+ days or in your book. The search box looks through names, ranks, classes, zones, guild notes and what your book says about them.
+
+The **Joined** column comes from the "X has joined the guild." line: the day is remembered when you're online for it. Members already there when your book first read the roster show "before" that day, and someone who joined while you were away shows "by" the day you first saw them in the roster. Nothing is made up.
+
+Members in your book get a gold mark and show your alias, relationship, tags and note on hover. Click a member to open them in your book (someone new lands in Recent faces, first met in "<Your Guild>"), middle-click to whisper them, right-click to target them when they're nearby (out of combat). The tab only reads the roster: no invites, promotions, kicks or chat. Classic Era's roster leaves offline members out while Blizzard's guild window has "Show Offline Members" unticked; the tab tells you how many are hidden.
+
 Other addons can add a tab of their own to the book with `EzAcquaintancesAPI.AddTab` (see the end of `UI.lua`).
 
 ## Commands
@@ -47,6 +55,7 @@ Other addons can add a tab of their own to the book with `EzAcquaintancesAPI.Add
 | `/acq tag <name> <tag>` | toggle a tag; a new word becomes a tag of your own |
 | `/acq forget <name>` | remove them completely |
 | `/acq who <name>` | print what you know about them |
+| `/acq guild` | open the Guild tab |
 | `/acq icon`, `minimap`, `badge`, `tooltip`, `quiet` | toggle the launcher icon, minimap button, target badge, tooltip line, new-face messages |
 | `/acq reset` | reset window, icon, minimap button and badge positions |
 
