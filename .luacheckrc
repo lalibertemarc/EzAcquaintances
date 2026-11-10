@@ -22,7 +22,7 @@ read_globals = {
     "strtrim", "strlower", "wipe", "tinsert", "date", "time", "hooksecurefunc",
     -- Frames & UI
     "CreateFrame", "InCombatLockdown", "UIParent", "UISpecialFrames", "GameTooltip", "DEFAULT_CHAT_FRAME", "ChatFrame1", "TargetFrame",
-    "ChatFrameUtil", "ChatFrame_SendTell", "SetOverrideBindingClick", "ClearOverrideBindings",
+    "ChatFrameUtil", "ChatFrame_SendTell", "GetBindingAction", "GetBindingKey", "SetBinding",
     "RAID_CLASS_COLORS", "TooltipDataProcessor", "Enum",
     "Minimap", "GetCursorPosition", "GetMinimapShape",
     -- Namespaced APIs

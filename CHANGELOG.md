@@ -1,5 +1,10 @@
 # EzAcquaintances
 
+## v1.1.2
+
+- **Middle-click to whisper works again** on the Book, Recent faces and Guild tabs. The hidden button that lets you right-click to target someone was catching the middle click and doing nothing with it. Whatever you have on middle mouse (a ping, by default) no longer goes off too while you point at someone in the book; it works as usual everywhere else.
+- The book's search box and tag filter now sit in their own row over the list: with the Guild tab and other addons' tabs the top bar had no room left for them.
+
 ## v1.1.1
 
 - **Two people with the same first name are now two people.** Meeting a second Grim (say, Grim Sharpeye and Grim Wolfspeaker) used to land on the first Grim's page and could swap their surname. The book now goes by full name, so each Grim keeps their own page, notes and tags, and "your Bob met them" only shows for the right one. Your book is moved over by itself at login.

@@ -401,7 +401,7 @@ list:SetScript("OnMouseWheel", function(_, delta) Scroll(delta) end)
 -- may have onPick(row, button) (a click), onWhisper(row), onWheel(delta) and tooltip(row, GameTooltip).
 local targetButton = CreateFrame("Button", "EzAcquaintancesTargetButton", UIParent, "SecureActionButtonTemplate")
 targetButton:SetFrameStrata("HIGH")
-targetButton:RegisterForClicks("LeftButtonUp",
+targetButton:RegisterForClicks("LeftButtonUp", "MiddleButtonUp",
     C_CVar.GetCVarBool("ActionButtonUseKeyDown") and "RightButtonDown" or "RightButtonUp")
 targetButton:SetAttribute("type2", "macro")
 targetButton:EnableMouseWheel(true)
@@ -416,29 +416,41 @@ local function TargetMacro(name)
     return "/targetexact " .. name .. "\n/targetexact " .. first
 end
 
--- Middle mouse is often bound to something else (Forever's default: ping), and a mouse binding fires
--- even over a frame. So while the target button covers a row, middle mouse is overridden to click this
--- plain button instead, which whispers; the bound action doesn't fire. Override bindings can't change
--- in combat: there the rows' own middle-click whispers and the bound action fires too.
-local whisperKey = CreateFrame("Button", "EzAcquaintancesWhisperKey", UIParent)
-whisperKey:RegisterForClicks("AnyUp")
-whisperKey:SetScript("OnClick", function()
-    local row = targetButton.row
-    if row and row.onWhisper then return row.onWhisper(row) end
-    local key = row and targetButton.key
-    if not key then return end
-    selected = key
-    Refresh(true)
-    ns.Whisper(key)
-end)
+-- Whatever middle mouse is bound to still fires over the book, and Blizzard starts a ping from its own
+-- global mouse-down handler whenever the pressed button is the ping key (GetBindingKey of
+-- TOGGLEPINGLISTENER), so neither the target button nor an override binding can stop it. So while the
+-- target button covers a row, middle mouse is unbound (never SaveBindings; put back on logout/reload
+-- too) and bound back once it leaves. Rebinding puts back every key of
+-- that action in its old order: Blizzard checks only the first key for the ping.
+local MIDDLE = "BUTTON3"
+local stash -- { action, keys } while middle mouse is unbound
+local function FreeMiddle()
+    if stash or InCombatLockdown() then return end
+    local action = GetBindingAction(MIDDLE)
+    if not action or action == "" then return end
+    stash = { action = action, keys = { GetBindingKey(action) } }
+    SetBinding(MIDDLE, nil)
+end
+local function RestoreMiddle()
+    if not stash or InCombatLockdown() then return end
+    local action, bound = stash.action, stash.keys
+    stash = nil
+    if GetBindingAction(MIDDLE) ~= "" then return end -- bound to something else meanwhile: leave it
+    for _, k in ipairs(bound) do SetBinding(k, nil) end
+    for _, k in ipairs(bound) do SetBinding(k, action) end
+end
 
-function Uncover()
+-- Moving between rows uncovers and covers again; the binding comes back only once nothing is covered
+-- for a moment, so it doesn't flip per row. Combat starting or logging out puts it back at once.
+function Uncover(_, event)
     if targetButton.row then targetButton.row:UnlockHighlight() end
     targetButton.row = nil
-    if not InCombatLockdown() then
-        targetButton:Hide()
-        ClearOverrideBindings(whisperKey)
-    end
+    if InCombatLockdown() then return end
+    targetButton:Hide()
+    if event then return RestoreMiddle() end -- combat starting, or logging out / reloading
+    C_Timer.After(0.3, function()
+        if not targetButton.row then RestoreMiddle() end
+    end)
 end
 
 -- Who row b targets: its own fullName (other tabs' rows), else its person's name.
@@ -463,17 +475,26 @@ local function Cover(b)
     targetButton.row, targetButton.key, targetButton.name = b, b.key, name
     b:LockHighlight()
     targetButton:Show()
-    SetOverrideBindingClick(whisperKey, true, "BUTTON3", "EzAcquaintancesWhisperKey", "MiddleButton")
+    FreeMiddle()
     return true
 end
 ns.CoverRow = Cover
 
 for _, b in ipairs(rows) do b:SetScript("OnEnter", Cover) end
 
--- The macro has run by now; if they aren't the target, /targetexact didn't find them.
+-- The macro has run by now; if they aren't the target, /targetexact didn't find them. Middle-click
+-- has no secure action (no "type3"/"type"), so it only whispers: the button covers the row, so the
+-- row's own middle-click never sees it.
 targetButton:SetScript("PostClick", function(self, button)
     local row, name = self.row, self.name
     if not name then return end
+    if button == "MiddleButton" then
+        if row and row.onWhisper then return row.onWhisper(row) end
+        if not self.key then return end
+        selected = self.key
+        Refresh(true)
+        return ns.Whisper(self.key)
+    end
     if row and row.onPick then
         row.onPick(row, button)
     else
@@ -502,6 +523,7 @@ targetButton:SetScript("OnMouseWheel", function(self, delta)
     Scroll(delta)
 end)
 targetButton:RegisterEvent("PLAYER_REGEN_DISABLED") -- last moment it can still be hidden
+targetButton:RegisterEvent("PLAYER_LOGOUT") -- middle mouse bound back before anything is written
 targetButton:SetScript("OnEvent", Uncover)
 
 local function Matches(p, query)
