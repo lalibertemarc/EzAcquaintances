@@ -1,5 +1,10 @@
 # EzAcquaintances
 
+## v1.1.3
+
+- **Lighter on memory.** The Guild tab no longer rebuilds the whole roster every time the game updates it (that alone was ~190 KB of throwaway data per update in a 250-member guild), and hovering over strangers or showing their tooltip no longer costs anything.
+- Listed under **Roleplay** in the game's AddOns list, next to other roleplay addons.
+
 ## v1.1.2
 
 - **Middle-click to whisper works again** on the Book, Recent faces and Guild tabs. The hidden button that lets you right-click to target someone was catching the middle click and doing nothing with it. Whatever you have on middle mouse (a ping, by default) no longer goes off too while you point at someone in the book; it works as usual everywhere else.
