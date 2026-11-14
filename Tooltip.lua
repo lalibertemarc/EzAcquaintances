@@ -27,9 +27,8 @@ end
 
 -- The record for the player a unit token points at, with its key.
 local function PersonFor(unit)
-    local info = unit and ns.Readable(unit) and ns.UnitInfo(unit)
-    if not info then return end
-    local key = ns.KeyFor(info.name)
+    local key = unit and ns.Readable(unit) and ns.UnitKey(unit)
+    if not key then return end
     return ns.Person(key), key
 end
 

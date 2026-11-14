@@ -37,6 +37,25 @@ local function FirstOf(key)
 end
 ns.FirstOf = FirstOf
 
+-- First name -> the key of the one person with it, or false when several share it. Built on demand and
+-- dropped whenever a key is added or removed (PeopleMoved), so a first-name lookup (guild rosters, chat)
+-- doesn't walk the whole book each time.
+local byFirst
+
+local function PeopleMoved()
+    byFirst = nil
+end
+
+local function FirstIndex()
+    if byFirst then return byFirst end
+    byFirst = {}
+    for k in pairs(EzAcquaintancesCharDB.people) do
+        local first = FirstOf(k)
+        if byFirst[first] == nil then byFirst[first] = k else byFirst[first] = false end
+    end
+    return byFirst
+end
+
 -- Key of the record for name: its own; for a first name alone, the one person with that first name (nil
 -- second return when two share it); for a full name, a record kept from before its surname was known.
 -- Otherwise the key a new record would get.
@@ -48,13 +67,8 @@ function ns.KeyFor(name)
     if first ~= key then
         return people[first] and not (people[first].name or ""):find(" ") and first or key
     end
-    local found
-    for k in pairs(people) do
-        if FirstOf(k) == first then
-            if found then return key, true end -- ambiguous
-            found = k
-        end
-    end
+    local found = FirstIndex()[first]
+    if found == false then return key, true end -- ambiguous
     return found or key
 end
 
@@ -88,23 +102,37 @@ local function UnitFullName(unit)
     return name
 end
 
--- Name, race, class and level of a player unit, or nil (no unit, not a player, or secret).
-function ns.UnitInfo(unit)
+local function IsPlayerUnit(unit)
     local exists = UnitExists(unit)
-    if issecret(exists) or not exists then return end
+    if issecret(exists) or not exists then return false end
     local isPlayer = UnitIsPlayer(unit)
-    if issecret(isPlayer) or not isPlayer then return end
+    return not issecret(isPlayer) and isPlayer and true or false
+end
+
+-- Name, race, class and level of a player unit, or nil (no unit, not a player, or secret).
+-- into: a table to fill instead of a new one (for callers that don't keep it).
+function ns.UnitInfo(unit, into)
+    if not IsPlayerUnit(unit) then return end
     local name = UnitFullName(unit)
     if not name then return end
     local className, classFile = UnitClass(unit)
     local level = UnitLevel(unit)
-    return {
-        name = name,
-        race = Readable(UnitRace(unit)),
-        className = Readable(className),
-        class = Readable(classFile),
-        level = not issecret(level) and type(level) == "number" and level > 0 and level or nil,
-    }
+    local t = into or {}
+    t.name = name
+    t.race = Readable(UnitRace(unit))
+    t.className = Readable(className)
+    t.class = Readable(classFile)
+    t.level = not issecret(level) and type(level) == "number" and level > 0 and level or nil
+    t.place = nil
+    return t
+end
+
+-- Book key and display name of a player unit, without building a table: mouseover and unit tooltips run
+-- all the time in a city, and most of them are strangers.
+function ns.UnitKey(unit)
+    if not IsPlayerUnit(unit) then return end
+    local name = ns.CleanName(UnitFullName(unit))
+    if name then return ns.KeyFor(name), name end
 end
 
 -- Fills race/class/level from a chat event's sender GUID where the game tells us.
@@ -148,9 +176,12 @@ local function Index(key, p)
         if next(seen[key]) == nil then seen[key] = nil end
         return
     end
-    seen[key][myChar] = {
-        name = p.name, t = p.last, met = p.first.t, zone = p.first.zone, sub = p.first.sub, book = p.book,
-    }
+    local r = seen[key][myChar] -- filled in place: this runs on every sighting
+    if not r then
+        r = {}
+        seen[key][myChar] = r
+    end
+    r.name, r.t, r.met, r.zone, r.sub, r.book = p.name, p.last, p.first.t, p.first.zone, p.first.sub, p.book
 end
 
 -- Moves a record (and its index entry) to another key: a first-name-only record learning its surname,
@@ -160,6 +191,7 @@ local function Rekey(old, new)
     if old == new or not people[old] then return new end
     if not people[new] then people[new] = people[old] end
     people[old] = nil
+    PeopleMoved()
     Index(old, nil)
     Index(new, people[new])
     return new
@@ -211,6 +243,7 @@ function ns.Meet(info, via, quiet)
         if info.place then zone, sub = info.place, nil end
         p = { first = { t = now, zone = zone, sub = sub }, via = via, met = 1, tags = {} }
         people[key], isNew = p, true
+        PeopleMoved()
     elseif now - (p.last or 0) >= ns.MEET_GAP then
         p.met = (p.met or 1) + 1
     elseif now - (p.last or 0) < ns.SEEN_THROTTLE then
@@ -261,6 +294,7 @@ end
 
 function ns.Forget(key)
     EzAcquaintancesCharDB.people[key] = nil
+    PeopleMoved()
     Index(key, nil)
     Changed(key)
 end
@@ -505,7 +539,7 @@ local function OnTarget()
     if info then
         Expire(targeted, ns.TRIGGERS.say.window)
         targeted[ns.Key(ns.CleanName(info.name) or info.name)] = { t = clock(), info = info }
-        ns.Seen(Copy(info))
+        ns.Seen(info) -- only reads it (and cleans its name), so the stored one can go
     end
     if ns.UpdateBadge then ns.UpdateBadge() end
 end
@@ -560,6 +594,7 @@ end
 
 local function Prune()
     Migrate()
+    PeopleMoved()
     local t, people, seen = time(), EzAcquaintancesCharDB.people, EzAcquaintancesDB.seen
     local inbox = {}
     for key, p in pairs(people) do
@@ -573,6 +608,7 @@ local function Prune()
         table.sort(inbox, function(a, b) return (people[a].last or 0) < (people[b].last or 0) end)
         for i = 1, #inbox - ns.INBOX_MAX do people[inbox[i]] = nil end
     end
+    PeopleMoved()
 
     local keys = {}
     for key, chars in pairs(seen) do
@@ -770,6 +806,8 @@ end
 ---------------------------------------------------------------------------
 -- Events
 ---------------------------------------------------------------------------
+local mouseoverInfo = {} -- reused: ns.Seen only reads it
+
 local HANDLERS = {
     GROUP_ROSTER_UPDATE = function()
         if groupPending or not ns.TriggerOn("group") then return end
@@ -803,7 +841,8 @@ local HANDLERS = {
     UNIT_AURA = OnAura,
     PLAYER_TARGET_CHANGED = OnTarget,
     UPDATE_MOUSEOVER_UNIT = function()
-        ns.Seen(ns.UnitInfo("mouseover"))
+        local key = ns.UnitKey("mouseover") -- strangers: nothing to update, so no table built for them
+        if key and EzAcquaintancesCharDB.people[key] then ns.Seen(ns.UnitInfo("mouseover", mouseoverInfo)) end
     end,
 }
 if ns.ERA then HANDLERS.COMBAT_LOG_EVENT_UNFILTERED = OnCombatLog end

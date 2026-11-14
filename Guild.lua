@@ -13,6 +13,9 @@ local Readable = ns.Readable
 local DAY = 86400
 
 local members = {}  -- this guild's members but you, as read last: see Read
+-- Roster rows are kept between reads and filled in place (GUILD_ROSTER_UPDATE comes often, and other addons
+-- ask for the roster too): pool[name] = row, stamped with the read that last saw it.
+local pool, roster, present, readCount = {}, {}, {}, 0
 local info = { total = 0, online = 0, hidden = 0 } -- counts from the last read
 local guildName     -- nil when you aren't in a guild
 
@@ -88,6 +91,18 @@ local function Days(y, m, d, h)
     return (Number(y) or 0) * 365 + (Number(m) or 0) * 30 + (Number(d) or 0) + (Number(h) or 0) / 24
 end
 
+-- The kept row for name, put at the end of out for this read.
+local function Row(out, name)
+    local m = pool[name]
+    if not m then
+        m = { name = name }
+        pool[name] = m
+    end
+    m.stamp = readCount
+    out[#out + 1] = m
+    return m
+end
+
 -- Legacy roster into out; returns total and online counts, or nil when the API isn't there.
 local function ReadLegacy(out)
     if not (GetNumGuildMembers and GetGuildRosterInfo) then return end
@@ -101,11 +116,10 @@ local function ReadLegacy(out)
         if name then
             local offline = 0
             if not Readable(isOnline) and GetGuildRosterLastOnline then offline = Days(GetGuildRosterLastOnline(i)) end
-            out[#out + 1] = {
-                name = name, rank = Readable(rank), rankIndex = Number(rankIndex), level = Number(level),
-                className = Readable(className), class = Readable(classFile), zone = Readable(zone),
-                note = Readable(note), online = Readable(isOnline) and true or false, offline = offline,
-            }
+            local m = Row(out, name)
+            m.rank, m.rankIndex, m.level = Readable(rank), Number(rankIndex), Number(level)
+            m.className, m.class, m.zone = Readable(className), Readable(classFile), Readable(zone)
+            m.note, m.online, m.offline = Readable(note), Readable(isOnline) and true or false, offline
         end
     end
     return total, Number(online) or 0
@@ -139,12 +153,11 @@ local function ReadClub(out)
             local on = presence and ONLINE[presence] or false
             if on then online = online + 1 end
             local className, classFile = ClassOf(m.classID)
-            out[#out + 1] = {
-                name = name, rank = Readable(m.guildRank), rankIndex = Number(m.guildRankOrder),
-                level = Number(m.level), className = Readable(className), class = Readable(classFile),
-                zone = Readable(m.zone), note = Readable(m.memberNote), online = on,
-                offline = on and 0 or Days(m.lastOnlineYear, m.lastOnlineMonth, m.lastOnlineDay, m.lastOnlineHour),
-            }
+            local r = Row(out, name)
+            r.rank, r.rankIndex, r.level = Readable(m.guildRank), Number(m.guildRankOrder), Number(m.level)
+            r.className, r.class, r.zone = Readable(className), Readable(classFile), Readable(m.zone)
+            r.note, r.online = Readable(m.memberNote), on
+            r.offline = on and 0 or Days(m.lastOnlineYear, m.lastOnlineMonth, m.lastOnlineDay, m.lastOnlineHour)
         end
     end
     return #ids, online
@@ -155,19 +168,24 @@ local function Read()
     guildName = GuildName()
     if not guildName then
         wipe(members)
+        wipe(pool)
         info.total, info.online, info.hidden = 0, 0, 0
         return true
     end
-    local list = {}
+    readCount = readCount + 1
+    local list = wipe(roster)
     local total, online = ReadLegacy(list)
     if (not total or #list == 0) then
-        local club = {}
-        local cTotal, cOnline = ReadClub(club)
-        if cTotal and #club > 0 then list, total, online = club, cTotal, cOnline end
+        wipe(list)
+        total, online = ReadClub(list)
+    end
+    for name, m in pairs(pool) do -- rows this read didn't see: gone from the guild (or not sent this time)
+        if m.stamp ~= readCount then pool[name] = nil end
     end
     if not total or total == 0 or #list == 0 then return false end -- the roster hasn't arrived yet
 
-    local g, now, present = Record(guildName), time(), {}
+    local g, now = Record(guildName), time()
+    wipe(present)
     wipe(members)
     for _, m in ipairs(list) do
         m.key = ns.KeyFor(m.name) -- the book's key for them (the roster may give a first name alone)
@@ -328,19 +346,26 @@ local SORTS = {
     end,
 }
 
+-- query (lowercase) found in s; checked field by field so a refresh while searching builds no tables.
+local function Has(s, query)
+    return type(s) == "string" and strlower(s):find(query, 1, true) ~= nil
+end
+
 local function Matches(m, query)
     if query == "" then return true end
-    local p = ns.Person(m.key)
-    local hay = {
-        m.name, m.rank or "", m.className or "", m.zone or "", m.note or "",
-    }
-    if p then
-        hay[#hay + 1] = p.alias or ""
-        hay[#hay + 1] = p.rel or ""
-        hay[#hay + 1] = p.note or ""
-        hay[#hay + 1] = table.concat(ns.TagList(p), " ")
+    if Has(m.name, query) or Has(m.rank, query) or Has(m.className, query) or Has(m.zone, query)
+        or Has(m.note, query) then
+        return true
     end
-    return strlower(table.concat(hay, " ")):find(query, 1, true) ~= nil
+    local p = ns.Person(m.key)
+    if not p then return false end
+    if Has(p.alias, query) or Has(p.rel, query) or Has(p.note, query) then return true end
+    if p.tags then
+        for tag in pairs(p.tags) do
+            if Has(tag, query) then return true end
+        end
+    end
+    return false
 end
 
 ---------------------------------------------------------------------------
