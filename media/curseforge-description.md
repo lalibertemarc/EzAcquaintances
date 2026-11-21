@@ -94,6 +94,7 @@ EzAcquaintances is the memory of a whole set of roleplay addons:
 - **EzOOC**: out-of-character lines in `(( ))`. Whisper someone OOC straight from their page.
 - **EzTongues**: speak Orcish, Thalassian, Gutterspeak and more. Whisper in a tongue from the book too.
 - **Buff Me Please**: asks the right player for the right buff. Thanking them logs the meeting.
+- **EzLines**: your own prewritten lines, one search away, in your accent, out of character or in a tongue.
 
 Every one of them is free, stands on its own, and needs nothing from the people you meet.
 
